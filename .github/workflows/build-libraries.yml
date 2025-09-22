@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         cpu: [x64, arm, arm64]
-        config: [Release, Debug]
+        config: [Release]
 
     env:
       # Where the ClearScript root will be (set dynamically in steps if cloning)
