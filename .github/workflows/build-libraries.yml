@@ -1,8 +1,6 @@
 name: Build ClearScript (Linux, Ubuntu 20.04)
 
 on:
-  push:
-    branches: ['**']
   workflow_dispatch:
     inputs:
       clearscript_path:
