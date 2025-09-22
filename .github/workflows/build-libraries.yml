@@ -1,11 +1,10 @@
 name: Build ClearScript (Linux)
 
 on:
-  push:
-    branches: ['**']
   pull_request:
     branches: ['**']
-    
+  workflow_dispatch:
+
     inputs:
       clearscript_path:
         description: "Path to ClearScript root ('.' if this repo is ClearScript; otherwise a subfolder name)"
@@ -19,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        cpu: [x64, arm, arm64]
+        cpu: [x64, arm64]
         config: [Release]
 
     env:
@@ -30,12 +29,23 @@ jobs:
       IS_ARM64: ${{ matrix.cpu == 'arm64' }}
 
     steps:
+
+
       - name: Checkout this repository
         uses: actions/checkout@v4
 
       - name: Normalize CLEAR_SCRIPT_DIR when building this repo directly
         if: ${{ github.event.inputs.clearscript_repo == '' }}
         run: echo "CLEAR_SCRIPT_DIR=.">> $GITHUB_ENV
+
+      - name: Fix script permissions (and normalize line endings)
+        working-directory: ${{ env.CLEAR_SCRIPT_DIR }}
+        run: |
+          set -euxo pipefail
+          # Make all .sh files under Unix/ executable
+          find Unix -type f -name "*.sh" -print0 | xargs -0 chmod +x
+          sudo apt-get update && sudo apt-get install -y dos2unix
+          find Unix -type f -name "*.sh" -print0 | xargs -0 dos2unix
 
       - name: Setup .NET 8 SDK
         uses: actions/setup-dotnet@v4
