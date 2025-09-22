@@ -14,11 +14,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: ubuntu:20.04
 
     strategy:
       fail-fast: false
       matrix:
-        cpu: [x64, arm64]
+        cpu: [x64]
         config: [Release]
 
     env:
