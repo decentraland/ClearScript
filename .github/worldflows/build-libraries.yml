@@ -1,0 +1,87 @@
+name: Build ClearScript (Linux)
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      clearscript_path:
+        description: "Path to ClearScript root ('.' if this repo is ClearScript; otherwise a subfolder name)"
+        required: false
+        default: "ClearScript"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        cpu: [x64, arm, arm64]
+        config: [Release, Debug]
+
+    env:
+      # Where the ClearScript root will be (set dynamically in steps if cloning)
+      CLEAR_SCRIPT_DIR: ${{ github.event.inputs.clearscript_path != '' && github.event.inputs.clearscript_path || '.' }}
+      IS_DEBUG: ${{ matrix.config == 'Debug' }}
+      IS_ARM: ${{ matrix.cpu == 'arm' }}
+      IS_ARM64: ${{ matrix.cpu == 'arm64' }}
+
+    steps:
+      - name: Checkout this repository
+        uses: actions/checkout@v4
+
+      - name: Normalize CLEAR_SCRIPT_DIR when building this repo directly
+        if: ${{ github.event.inputs.clearscript_repo == '' }}
+        run: echo "CLEAR_SCRIPT_DIR=.">> $GITHUB_ENV
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install toolchain and build deps
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          # Base tools
+          sudo apt-get install -y git make clang pkg-config || sudo apt-get install -y git make clang pkgconf
+          # Cross toolchains (only when needed)
+          if [[ "${{ matrix.cpu }}" == "arm" ]]; then
+            sudo apt-get install -y g++-10-arm-linux-gnueabihf
+          elif [[ "${{ matrix.cpu }}" == "arm64" ]]; then
+            sudo apt-get install -y g++-10-aarch64-linux-gnu
+          fi
+
+      - name: Build ClearScript
+        working-directory: ${{ env.CLEAR_SCRIPT_DIR }}
+        run: |
+          set -euxo pipefail
+          MAKE_ARGS=()
+          # Debug or Release
+          if [[ "${{ matrix.config }}" == "Debug" ]]; then
+            MAKE_ARGS+=("DEBUG=1")
+          fi
+          # CPU target
+          case "${{ matrix.cpu }}" in
+            arm)   MAKE_ARGS+=("CPU=arm") ;;
+            arm64) MAKE_ARGS+=("CPU=arm64") ;;
+            x64)   : ;; # default native build
+          esac
+
+          echo "Running: make -f Unix/Makefile ${MAKE_ARGS[*]}"
+          make -f Unix/Makefile "${MAKE_ARGS[@]}"
+
+      - name: Show output tree
+        working-directory: ${{ env.CLEAR_SCRIPT_DIR }}
+        run: |
+          set -eux
+          tree -L 3 bin || find bin -maxdepth 3 -type f -print
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: clearscript-${{ matrix.cpu }}-${{ matrix.config }}
+          path: |
+            ${{ env.CLEAR_SCRIPT_DIR }}/bin/${{ matrix.config }}/
+          if-no-files-found: error
