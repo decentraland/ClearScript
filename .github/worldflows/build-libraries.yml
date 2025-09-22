@@ -2,9 +2,10 @@ name: Build ClearScript (Linux)
 
 on:
   push:
-    branches: 
-      - '**'
-  workflow_dispatch:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+    
     inputs:
       clearscript_path:
         description: "Path to ClearScript root ('.' if this repo is ClearScript; otherwise a subfolder name)"
