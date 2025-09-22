@@ -2,7 +2,8 @@ name: Build ClearScript (Linux)
 
 on:
   push:
-    branches: [ main, master ]
+    branches: 
+      - '**'
   workflow_dispatch:
     inputs:
       clearscript_path:
