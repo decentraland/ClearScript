@@ -157,6 +157,16 @@ jobs:
           Write-Host "MSBuild path: $msbuild"
           & $msbuild -version
 
+      - name: Restore NuGet packages
+        shell: pwsh
+        working-directory: ${{ env.CLEAR_SCRIPT_DIR }}
+        run: |
+          if ("${{ github.event.inputs.with_v8 }}" -eq "true") {
+            $sln = "ClearScript.sln"
+          } else {
+            $sln = "ClearScript.NoV8.sln"
+          }
+          & "$env:MSBUILD_PATH" $sln /t:Restore /p:Configuration=${{ env.BUILD_CONFIG }}
 
       # Per docs: run V8Update to fetch & build tested V8; requires VS2022 + Windows SDK
       - name: Build V8 (V8Update)
