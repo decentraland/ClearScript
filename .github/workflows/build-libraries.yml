@@ -142,6 +142,22 @@ jobs:
           dotnet --info
           & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.Component.MSBuild -property installationPath
           msbuild -version
+    
+      - name: Locate MSBuild
+        id: locate_msbuild
+        shell: pwsh
+        run: |
+          $vsPath = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" `
+            -latest -products * -requires Microsoft.Component.MSBuild `
+            -property installationPath
+          if (-not (Test-Path $vsPath)) {
+            throw "Visual Studio path not found"
+          }
+          $msbuild = Join-Path $vsPath "MSBuild\Current\Bin\MSBuild.exe"
+          echo "MSBUILD_PATH=$msbuild" >> $env:GITHUB_ENV
+          Write-Host "MSBuild path: $msbuild"
+          & $msbuild -version
+
 
       # Per docs: run V8Update to fetch & build tested V8; requires VS2022 + Windows SDK
       - name: Build V8 (V8Update)
@@ -154,17 +170,18 @@ jobs:
 
       # If skipping V8, we’ll compile the NoV8 solution
       - name: Build ClearScript (MSBuild)
-        shell: cmd
+        shell: pwsh
         working-directory: ${{ env.CLEAR_SCRIPT_DIR }}
         run: |
-          set CONFIG=${{ env.BUILD_CONFIG }}
-          if /I "${{ github.event.inputs.with_v8 }}"=="true" (
-            set SLN=ClearScript.sln
-          ) else (
-            set SLN=ClearScript.NoV8.sln
-          )
-          rem Use MSBuild to build the solution; output goes to bin\[Debug|Release]
-          msbuild %SLN% /m /p:Configuration=%CONFIG%
+          $config = "${{ env.BUILD_CONFIG }}"
+          if ("${{ github.event.inputs.with_v8 }}" -eq "true") {
+            $sln = "ClearScript.sln"
+          } else {
+            $sln = "ClearScript.NoV8.sln"
+          }
+          Write-Host "Building $sln ($config)"
+          & "$env:MSBUILD_PATH" $sln /m /p:Configuration=$config
+
 
       - name: Inspect built binaries
         shell: pwsh
