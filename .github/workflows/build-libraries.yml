@@ -3,7 +3,7 @@ name: Build ClearScript (All OS)
 on:
   push:
     branches:
-      - '*'         # run on all branches
+      - '**'         # run on all branches
   workflow_dispatch:
     inputs:
       clearscript_path:
