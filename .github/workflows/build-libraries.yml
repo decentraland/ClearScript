@@ -237,6 +237,11 @@ jobs:
           clang --version || true
           dotnet --info
 
+      - name: Fix script permissions
+        working-directory: ${{ env.CLEAR_SCRIPT_DIR }}
+        run: |
+          find Unix -type f -name "*.sh" -print0 | xargs -0 chmod +x
+
       - name: Build ClearScript (Unix/Makefile)
         working-directory: ${{ env.CLEAR_SCRIPT_DIR }}
         run: |
