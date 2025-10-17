@@ -1,0 +1,25 @@
+{
+    "name": "Decentraland.ClearScript",
+    "rootNamespace": "Microsoft.ClearScript",
+    "references": [],
+    "includePlatforms": [
+        "Editor",
+        "LinuxStandalone64",
+        "macOSStandalone",
+        "WSA",
+        "WindowsStandalone64"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "ClearScript.V8.ICUData.dll",
+        "Microsoft.CSharp.dll",
+        "Newtonsoft.Json.dll",
+        "System.Runtime.CompilerServices.Unsafe.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
