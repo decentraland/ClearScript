@@ -66,6 +66,14 @@ jobs:
           apt-get update
           apt-get install -y dotnet-sdk-8.0
 
+      - name: Install .NET 9 SDK
+        run: |
+          wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+          dpkg -i packages-microsoft-prod.deb
+          rm -f packages-microsoft-prod.deb
+          apt-get update
+          apt-get install -y dotnet-sdk-9.0
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -139,6 +147,11 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
+
+      - name: Setup .NET 9 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
 
       - name: Show VS/MSBuild
         shell: pwsh
@@ -234,6 +247,11 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
+
+      - name: Setup .NET 9 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
 
       - name: Xcode info
         run: |
