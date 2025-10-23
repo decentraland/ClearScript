@@ -1,0 +1,268 @@
+name: Build ClearScript (All OS)
+
+on:
+  push:
+    branches:
+      - '**'         # run on all branches
+  workflow_dispatch:
+    inputs:
+      clearscript_path:
+        description: "Path to ClearScript root ('.' if this repo is ClearScript; otherwise a subfolder)"
+        required: false
+        default: "ClearScript"
+      config:
+        description: "Build configuration"
+        required: false
+        default: "Release"
+      with_v8:
+        description: "Windows only: build full ClearScript with V8 (true) or NoV8 solution (false)"
+        required: false
+        default: "true"
+
+env:
+  CLEAR_SCRIPT_DIR: ${{ github.event.inputs.clearscript_path != '' && github.event.inputs.clearscript_path || '.' }}
+  BUILD_CONFIG: ${{ github.event.inputs.config != '' && github.event.inputs.config || 'Release' }}
+
+jobs:
+  # =========================
+  # L I N U X  (Ubuntu 20.04)
+  # =========================
+  linux:
+    name: Linux (Ubuntu 20.04, glibc 2.31)
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:20.04  # glibc 2.31 per your requirement
+    strategy:
+      fail-fast: false
+      matrix:
+        cpu: [x64]       # add: [x64, arm, arm64] if you want cross builds by default
+    defaults:
+      run:
+        shell: bash
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - name: Show base image + glibc
+        run: |
+          cat /etc/os-release
+          ldd --version || true
+
+      - name: Install prerequisites
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            ca-certificates apt-transport-https software-properties-common \
+            git wget curl make clang pkg-config build-essential gnupg dos2unix file tree
+
+      - name: Install .NET 8 SDK
+        run: |
+          wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+          dpkg -i packages-microsoft-prod.deb
+          rm -f packages-microsoft-prod.deb
+          apt-get update
+          apt-get install -y dotnet-sdk-8.0
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Normalize CLEAR_SCRIPT_DIR when building this repo directly
+        if: ${{ github.event.inputs.clearscript_path == '' }}
+        run: echo "CLEAR_SCRIPT_DIR=.">> $GITHUB_ENV
+
+      - name: Cross toolchains
+        if: ${{ matrix.cpu != 'x64' }}
+        run: |
+          case "${{ matrix.cpu }}" in
+            arm)   apt-get install -y g++-10-arm-linux-gnueabihf ;;
+            arm64) apt-get install -y g++-10-aarch64-linux-gnu ;;
+          esac
+
+      - name: Fix script permissions (and line endings)
+        working-directory: ${{ env.CLEAR_SCRIPT_DIR }}
+        run: |
+          find Unix -type f -name "*.sh" -print0 | xargs -0 chmod +x
+          find Unix -type f -name "*.sh" -print0 | xargs -0 dos2unix || true
+
+      - name: Build ClearScript (Unix/Makefile)
+        working-directory: ${{ env.CLEAR_SCRIPT_DIR }}
+        run: |
+          set -euxo pipefail
+          MAKE_ARGS=()
+          if [[ "${{ env.BUILD_CONFIG }}" == "Debug" ]]; then MAKE_ARGS+=("DEBUG=1"); fi
+          case "${{ matrix.cpu }}" in
+            arm)   MAKE_ARGS+=("CPU=arm") ;;
+            arm64) MAKE_ARGS+=("CPU=arm64") ;;
+          esac
+          echo "make -f Unix/Makefile ${MAKE_ARGS[*]}"
+          make -f Unix/Makefile "${MAKE_ARGS[@]}"
+
+      - name: Inspect built libs (ldd)
+        working-directory: ${{ env.CLEAR_SCRIPT_DIR }}
+        run: |
+          find bin -type f -name "*.so" -print | while read so; do
+            echo "---- $so ----"
+            file "$so" || true
+            ldd "$so" || true
+          done
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: clearscript-${{ matrix.cpu }}-${{ env.BUILD_CONFIG }}-ubuntu2004
+          path: ${{ env.CLEAR_SCRIPT_DIR }}/bin/${{ env.BUILD_CONFIG }}/
+          if-no-files-found: error
+
+  # =========================
+  # W I N D O W S
+  # =========================
+  windows:
+    name: Windows (VS2022)
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64]  # you can add: [x64, x86, arm64] if you want to compile all
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Normalize CLEAR_SCRIPT_DIR when building this repo directly
+        if: ${{ github.event.inputs.clearscript_path == '' }}
+        shell: pwsh
+        run: echo "CLEAR_SCRIPT_DIR=." >> $env:GITHUB_ENV
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Show VS/MSBuild
+        shell: pwsh
+        run: |
+          dotnet --info
+          & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.Component.MSBuild -property installationPath
+    
+      - name: Locate MSBuild
+        id: locate_msbuild
+        shell: pwsh
+        run: |
+          $vsPath = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" `
+            -latest -products * -requires Microsoft.Component.MSBuild `
+            -property installationPath
+          if (-not (Test-Path $vsPath)) {
+            throw "Visual Studio path not found"
+          }
+          $msbuild = Join-Path $vsPath "MSBuild\Current\Bin\MSBuild.exe"
+          echo "MSBUILD_PATH=$msbuild" >> $env:GITHUB_ENV
+          Write-Host "MSBuild path: $msbuild"
+          & $msbuild -version
+
+      - name: Restore NuGet packages
+        shell: pwsh
+        working-directory: ${{ env.CLEAR_SCRIPT_DIR }}
+        run: |
+          if ("${{ github.event.inputs.with_v8 }}" -eq "true") {
+            $sln = "ClearScript.sln"
+          } else {
+            $sln = "ClearScript.NoV8.sln"
+          }
+          & "$env:MSBUILD_PATH" $sln /t:Restore /p:Configuration=${{ env.BUILD_CONFIG }}
+
+      # Per docs: run V8Update to fetch & build tested V8; requires VS2022 + Windows SDK
+      - name: Build V8 (V8Update)
+        if: ${{ github.event.inputs.with_v8 == 'true' }}
+        shell: cmd
+        working-directory: ${{ env.CLEAR_SCRIPT_DIR }}
+        run: |
+          echo Running V8Update (Release). This may take a while.
+          V8Update
+
+      # If skipping V8, we’ll compile the NoV8 solution
+      - name: Build ClearScript (MSBuild)
+        shell: pwsh
+        working-directory: ${{ env.CLEAR_SCRIPT_DIR }}
+        run: |
+          $config = "${{ env.BUILD_CONFIG }}"
+          if ("${{ github.event.inputs.with_v8 }}" -eq "true") {
+            $sln = "ClearScript.sln"
+          } else {
+            $sln = "ClearScript.NoV8.sln"
+          }
+          Write-Host "Building $sln ($config)"
+          & "$env:MSBUILD_PATH" $sln /m /p:Configuration=$config
+
+
+      - name: Inspect built binaries
+        shell: pwsh
+        working-directory: ${{ env.CLEAR_SCRIPT_DIR }}
+        run: |
+          Get-ChildItem -Recurse -File bin\${{ env.BUILD_CONFIG }} | ForEach-Object {
+            Write-Host "---- $($_.FullName) ----"
+          }
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: clearscript-${{ matrix.arch }}-${{ env.BUILD_CONFIG }}-windows
+          path: ${{ env.CLEAR_SCRIPT_DIR }}\bin\${{ env.BUILD_CONFIG }}\
+          if-no-files-found: error
+
+  # =========================
+  # m a c O S
+  # =========================
+  macos:
+    name: macOS (Xcode + Makefile)
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cpu: [arm64, x64]  # docs support CPU=[x64|arm64]
+        # On Apple Silicon runners, x64 is a cross build handled by the Makefile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Normalize CLEAR_SCRIPT_DIR when building this repo directly
+        if: ${{ github.event.inputs.clearscript_path == '' }}
+        run: echo "CLEAR_SCRIPT_DIR=." >> $GITHUB_ENV
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Xcode info
+        run: |
+          xcodebuild -version
+          clang --version || true
+          dotnet --info
+
+      - name: Fix script permissions
+        working-directory: ${{ env.CLEAR_SCRIPT_DIR }}
+        run: |
+          find Unix -type f -name "*.sh" -print0 | xargs -0 chmod +x
+
+      - name: Build ClearScript (Unix/Makefile)
+        working-directory: ${{ env.CLEAR_SCRIPT_DIR }}
+        run: |
+          set -euxo pipefail
+          MAKE_ARGS=()
+          if [[ "${{ env.BUILD_CONFIG }}" == "Debug" ]]; then MAKE_ARGS+=("DEBUG=1"); fi
+          if [[ "${{ matrix.cpu }}" == "x64" ]]; then MAKE_ARGS+=("CPU=x64"); else MAKE_ARGS+=("CPU=arm64"); fi
+          echo "make -f Unix/Makefile ${MAKE_ARGS[*]}"
+          make -f Unix/Makefile "${MAKE_ARGS[@]}"
+
+      - name: Inspect built dylibs
+        working-directory: ${{ env.CLEAR_SCRIPT_DIR }}
+        run: |
+          find bin -type f -name "*.dylib" -print | while read dylib; do
+            echo "---- $dylib ----"
+            file "$dylib" || true
+          done
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: clearscript-${{ matrix.cpu }}-${{ env.BUILD_CONFIG }}-macos
+          path: ${{ env.CLEAR_SCRIPT_DIR }}/bin/${{ env.BUILD_CONFIG }}/
+          if-no-files-found: error
