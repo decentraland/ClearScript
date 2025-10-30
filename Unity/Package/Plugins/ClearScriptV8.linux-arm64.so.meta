@@ -16,7 +16,7 @@ PluginImporter:
       settings:
         Is16KbAligned: true
     Any:
-      enabled: 1
+      enabled: 0
       settings:
         Exclude Editor: 0
         Exclude Linux64: 1
