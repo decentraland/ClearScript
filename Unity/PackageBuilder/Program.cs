@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 
 try
 {
-    string srcPath = @"..\..\..\..\..\ClearScript";
-    string dstPath = @"..\..\..\..\Package\Runtime";
+    string rootPath = GetGitRepositoryRootPath();
+    string srcPath = Path.Combine(rootPath, "ClearScript");
+    string dstPath = Path.Combine(rootPath, "Unity/Package/Runtime");
 
     try
     {
@@ -21,14 +23,14 @@ try
 
     foreach (string file in Directory.GetFiles(srcPath, "*.cs", SearchOption.AllDirectories))
     {
-        if (file.Contains(@"\ICUData\")
-            || file.Contains(@"\Properties\") && !file.EndsWith(@"\AssemblyInfo.Core.cs")
-            || file.Contains(@"\Windows\")
-            || file.Contains(".Net5.")
-            || file.Contains(".NetCore.")
-            || file.Contains(".NetFramework.")
-            || file.Contains(".UWP.")
-            || file.Contains(".Windows."))
+        if (PathContains(file, "/ICUData/")
+            || PathContains(file, "/Properties/") && !PathEndsWith(file, "/AssemblyInfo.Core.cs")
+            || PathContains(file, "/Windows/")
+            || PathContains(file, ".Net5.")
+            || PathContains(file, ".NetCore.")
+            || PathContains(file, ".NetFramework.")
+            || PathContains(file, ".UWP.")
+            || PathContains(file, ".Windows."))
         {
             continue;
         }
@@ -36,7 +38,7 @@ try
         string dstFile = string.Concat(dstPath, file.AsSpan(srcPath.Length));
         Directory.CreateDirectory(Path.GetDirectoryName(dstFile)!);
 
-        if (file.EndsWith(@"\AssemblyInfo.Core.cs"))
+        if (PathEndsWith(file, "/AssemblyInfo.Core.cs"))
         {
             using var reader = new StreamReader(file);
             using var writer = new StreamWriter(dstFile);
@@ -55,7 +57,7 @@ try
                 writer.WriteLine(line);
             }
 
-            writer.WriteLine(@"[assembly: InternalsVisibleTo(""Decentraland.ClearScript.Tests"")]");
+            writer.WriteLine("[assembly: InternalsVisibleTo(\"Decentraland.ClearScript.Tests\")]");
 
             while (true)
             {
@@ -83,7 +85,7 @@ try
 
         endOfFile:;
         }
-        else if (file.EndsWith(@"\V8SplitProxyManaged.cs"))
+        else if (PathEndsWith(file, "/V8SplitProxyManaged.cs"))
         {
             using var reader = new StreamReader(file);
             using var writer = new StreamWriter(dstFile);
@@ -139,7 +141,8 @@ try
 catch (Exception ex)
 {
     Console.WriteLine(ex);
-    Console.ReadKey(true);
+    try { Console.ReadKey(true); }
+    catch (InvalidOperationException) { }
     throw;
 }
 
@@ -194,7 +197,8 @@ catch (Exception ex)
 catch (Exception ex)
 {
     Console.WriteLine(ex);
-    Console.ReadKey(true);
+    try { Console.ReadKey(true); }
+    catch (InvalidOperationException) { }
     throw;
 }*/
 
@@ -231,3 +235,30 @@ static void DeleteEmptyFolders(string path)
         catch (DirectoryNotFoundException) { }
     }
 }
+
+static string GetGitRepositoryRootPath()
+{
+    string? path = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
+
+    if (string.IsNullOrEmpty(path))
+        throw new DirectoryNotFoundException("Can't obtain own executable path");
+
+    while (path is not null)
+    {
+        if (Directory.Exists(Path.Combine(path, ".git")))
+            return path;
+
+        path = Path.GetDirectoryName(path);
+    }
+
+    throw new DirectoryNotFoundException("No ancestor folder contains a .git folder");
+}
+
+static string NormalizePath(string path) =>
+    path.Replace('/', Path.DirectorySeparatorChar);
+
+static bool PathContains(string path, string value) =>
+    NormalizePath(path).Contains(value);
+
+static bool PathEndsWith(string path, string value) =>
+    NormalizePath(path).EndsWith(value);
