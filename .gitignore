@@ -1,4 +1,5 @@
 Thumbs.db
+.DS_Store
 *.obj
 *.exe
 *.pdb
@@ -36,6 +37,8 @@ V8/build/
 V8/DepotTools.zip
 V8/icudtl.dat
 .vs/
+.vscode/
+.idea/
 packages/
 NuGet/Private/
 [Bb]undle[Aa]rtifacts/
