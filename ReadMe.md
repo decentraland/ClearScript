@@ -2,7 +2,7 @@
 This is a fork of [ClearScript](https://github.com/microsoft/ClearScript) that was made for [Decentraland](https://decentraland.org/), a [Unity](https://unity.com/) game. ClearScript is a library that makes it easy to add scripting to your .NET applications. It currently supports JavaScript (via [V8](https://developers.google.com/v8/) and [JScript](https://docs.microsoft.com/en-us/previous-versions//hbxc2t98(v=vs.85))) and [VBScript](https://docs.microsoft.com/en-us/previous-versions//t0aew7h6(v=vs.85)).
 
 # Differences from Upstream
-* New unsafe APIs that Microsoft would not accept
+* Additional unsafe APIs unfit for upstream
 * A tool to generate a Unity package, and the package itself
 * Only JavaScript is supported
 * x86 is not supported
@@ -16,7 +16,7 @@ Add this line to your `manifest.json`:
 ```
 
 # Notes for Maintiners
-After you make a change, you must run PackageBuilder.exe, copy the new native libraries, if any, to Unity/Package/Plugins and also commit their debug symbols in the same commit.
+After you make a change, you must run `PackageBuilder.exe`, copy the new native libraries, if any, to `Unity/Package/Plugins` and also commit their debug symbols in the same commit.
 
 # Documentation
 * [Main Site / Blog](https://microsoft.github.io/ClearScript/)
