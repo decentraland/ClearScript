@@ -7,11 +7,13 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v4
+              with:
+                ssh-key: ${{ secrets.DEPLOY_KEY }}
             - name: Commit
               run: |
                 date > date.txt
-                git config set user.name Github
-                git config set user.email github@github.invalid
+                git config set user.name GitHub Actions
+                git config set user.email actions@github.invalid
                 git add date.txt
                 git commit -m "Test"
                 git push
