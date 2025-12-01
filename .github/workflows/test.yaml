@@ -12,7 +12,7 @@ jobs:
             - name: Commit
               run: |
                 date > date.txt
-                git config set user.name GitHub Actions
+                git config set user.name "GitHub Actions"
                 git config set user.email actions@github.invalid
                 git add date.txt
                 git commit -m "Test"
