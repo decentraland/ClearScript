@@ -1,18 +1,20 @@
 name: Test
-on: push
+on:
+  pull_request:
+    branches:
+    - master
 jobs:
     test:
         name: Test
+        if: github.actor != 'github-actions[bot]'
         runs-on: ubuntu-24.04
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
-              with:
-                ssh-key: ${{ secrets.DEPLOY_KEY }}
+              uses: actions/checkout@v6
             - name: Commit
               run: |
                 date > date.txt
-                git config set user.name "GitHub Actions"
+                git config set user.name "github-actions[bot]"
                 git config set user.email actions@github.invalid
                 git add date.txt
                 git commit -m "Test"
