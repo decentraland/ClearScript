@@ -1,0 +1,13 @@
+diff --git a/build/vs_toolchain.py b/build/vs_toolchain.py
+index f0b8bacf5..a8ada9543 100755
+--- a/build/vs_toolchain.py
++++ b/build/vs_toolchain.py
+@@ -368,7 +368,7 @@ def FindVCComponentRoot(component):
+   vc_component_msvc_root = os.path.join(os.environ['GYP_MSVS_OVERRIDE_PATH'],
+       'VC', component, 'MSVC')
+   vc_component_msvc_contents = glob.glob(
+-      os.path.join(vc_component_msvc_root, '14.*'))
++      os.path.join(vc_component_msvc_root, '14.4*'))
+   # Select the most recent toolchain if there are several.
+   _SortByHighestVersionNumberFirst(vc_component_msvc_contents)
+   for directory in vc_component_msvc_contents:
