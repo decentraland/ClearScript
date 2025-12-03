@@ -110,14 +110,6 @@
     </ItemGroup>
     
     <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))'">
-        <None Include="..\..\bin\$(Configuration)\ClearScriptV8.win-x86.dll" Link="ClearScriptV8.win-x86.dll">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Visible>false</Visible>
-        </None>
-        <None Include="..\..\bin\$(Configuration)\ClearScriptV8.win-x86.pdb" Link="ClearScriptV8.win-x86.pdb">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Visible>false</Visible>
-        </None>
         <None Include="..\..\bin\$(Configuration)\ClearScriptV8.win-x64.dll" Link="ClearScriptV8.win-x64.dll">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Visible>false</Visible>
