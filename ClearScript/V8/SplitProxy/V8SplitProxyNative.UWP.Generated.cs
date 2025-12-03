@@ -766,6 +766,21 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
+            object IV8SplitProxyNative.V8Context_ExecuteScriptFromUtf8(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, IntPtr pCode, int codeLength, UIntPtr codeDigest, bool evaluate)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        using (var resultScope = V8Value.CreateScope())
+                        {
+                            V8Context_ExecuteScriptFromUtf8(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, pCode, codeLength, codeDigest, evaluate, resultScope.Value);
+                            return V8Value.Get(resultScope.Value);
+                        }
+                    }
+                }
+            }
+
             V8Script.Handle IV8SplitProxyNative.V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
@@ -776,6 +791,17 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             return V8Context_Compile(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value);
                         }
+                    }
+                }
+            }
+
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileScriptFromUtf8(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, IntPtr pCode, int codeLength, UIntPtr codeDigest)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        return V8Context_CompileScriptFromUtf8(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, pCode, codeLength, codeDigest);
                     }
                 }
             }
@@ -1888,6 +1914,21 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             );
 
             [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Context_ExecuteScriptFromUtf8(
+                [In] V8Context.Handle hContext,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] IntPtr pCode,
+                [In] int codeLength,
+                [In] UIntPtr codeDigest,
+                [In] [MarshalAs(UnmanagedType.I1)] bool evaluate,
+                [In] V8Value.Ptr pResult
+            );
+
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Context_Compile(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pResourceName,
@@ -1896,6 +1937,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode
+            );
+
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Script.Handle V8Context_CompileScriptFromUtf8(
+                [In] V8Context.Handle hContext,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] IntPtr pCode,
+                [In] int codeLength,
+                [In] UIntPtr codeDigest
             );
 
             [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
@@ -2963,6 +3017,21 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
+            object IV8SplitProxyNative.V8Context_ExecuteScriptFromUtf8(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, IntPtr pCode, int codeLength, UIntPtr codeDigest, bool evaluate)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        using (var resultScope = V8Value.CreateScope())
+                        {
+                            V8Context_ExecuteScriptFromUtf8(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, pCode, codeLength, codeDigest, evaluate, resultScope.Value);
+                            return V8Value.Get(resultScope.Value);
+                        }
+                    }
+                }
+            }
+
             V8Script.Handle IV8SplitProxyNative.V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
@@ -2973,6 +3042,17 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             return V8Context_Compile(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value);
                         }
+                    }
+                }
+            }
+
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileScriptFromUtf8(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, IntPtr pCode, int codeLength, UIntPtr codeDigest)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        return V8Context_CompileScriptFromUtf8(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, pCode, codeLength, codeDigest);
                     }
                 }
             }
@@ -4085,6 +4165,21 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             );
 
             [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Context_ExecuteScriptFromUtf8(
+                [In] V8Context.Handle hContext,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] IntPtr pCode,
+                [In] int codeLength,
+                [In] UIntPtr codeDigest,
+                [In] [MarshalAs(UnmanagedType.I1)] bool evaluate,
+                [In] V8Value.Ptr pResult
+            );
+
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Context_Compile(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pResourceName,
@@ -4093,6 +4188,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode
+            );
+
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Script.Handle V8Context_CompileScriptFromUtf8(
+                [In] V8Context.Handle hContext,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] IntPtr pCode,
+                [In] int codeLength,
+                [In] UIntPtr codeDigest
             );
 
             [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
@@ -5160,6 +5268,21 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
+            object IV8SplitProxyNative.V8Context_ExecuteScriptFromUtf8(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, IntPtr pCode, int codeLength, UIntPtr codeDigest, bool evaluate)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        using (var resultScope = V8Value.CreateScope())
+                        {
+                            V8Context_ExecuteScriptFromUtf8(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, pCode, codeLength, codeDigest, evaluate, resultScope.Value);
+                            return V8Value.Get(resultScope.Value);
+                        }
+                    }
+                }
+            }
+
             V8Script.Handle IV8SplitProxyNative.V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
@@ -5170,6 +5293,17 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             return V8Context_Compile(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value);
                         }
+                    }
+                }
+            }
+
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileScriptFromUtf8(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, IntPtr pCode, int codeLength, UIntPtr codeDigest)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        return V8Context_CompileScriptFromUtf8(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, pCode, codeLength, codeDigest);
                     }
                 }
             }
@@ -6282,6 +6416,21 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             );
 
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Context_ExecuteScriptFromUtf8(
+                [In] V8Context.Handle hContext,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] IntPtr pCode,
+                [In] int codeLength,
+                [In] UIntPtr codeDigest,
+                [In] [MarshalAs(UnmanagedType.I1)] bool evaluate,
+                [In] V8Value.Ptr pResult
+            );
+
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Context_Compile(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pResourceName,
@@ -6290,6 +6439,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode
+            );
+
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Script.Handle V8Context_CompileScriptFromUtf8(
+                [In] V8Context.Handle hContext,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] IntPtr pCode,
+                [In] int codeLength,
+                [In] UIntPtr codeDigest
             );
 
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
