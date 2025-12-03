@@ -59,7 +59,7 @@ jobs:
           bin/Release/Unix/ClearScriptV8.linux-x64.so
           bin/Release/Unix/ClearScriptV8.linux-arm64.so
   macos:
-    name: Buld native binaries for macOS
+    name: Build native binaries for macOS
     runs-on: macos-latest
     steps:
     - name: Checkout
