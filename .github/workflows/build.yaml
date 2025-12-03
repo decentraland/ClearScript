@@ -25,7 +25,7 @@ jobs:
     - name: Build ClearScript
       run: |
         path %PATH%;C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin
-        msbuild -t:ClearScriptV8\ClearScriptV8_win-x64 -t:ClearScriptV8\ClearScriptV8_win-arm64 "-t:_NET Standard\ClearScript_V8_ICUData" -p:Configuration=Release -m ClearScript.sln
+        msbuild -t:Restore -t:ClearScriptV8\ClearScriptV8_win-x64 -t:ClearScriptV8\ClearScriptV8_win-arm64 "-t:_NET Standard\ClearScript_V8_ICUData" -p:Configuration=Release -m ClearScript.sln
     - name: Upload
       uses: actions/upload-artifact@v4
       with:
