@@ -45,7 +45,9 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v6
     - name: Install ARM64 cross-build tools
-      run: sudo apt-get install -y g++-10-aarch64-linux-gnu
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y g++-10-aarch64-linux-gnu
     - name: Build
       run: |
         make -f Unix/Makefile
