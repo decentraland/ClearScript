@@ -8,8 +8,8 @@ using System.Text.RegularExpressions;
 try
 {
     string rootPath = GetGitRepositoryRootPath();
-    string srcPath = Path.Combine(rootPath, "ClearScript");
-    string dstPath = Path.Combine(rootPath, "Unity/Package/Runtime");
+    string srcPath = CombinePath(rootPath, "ClearScript");
+    string dstPath = CombinePath(rootPath, "Unity/Package/Runtime");
 
     try
     {
@@ -254,11 +254,14 @@ static string GetGitRepositoryRootPath()
     throw new DirectoryNotFoundException("No ancestor folder contains a .git folder");
 }
 
+static string CombinePath(string path1, string path2) =>
+    Path.Combine(path1, NormalizePath(path2));
+
 static string NormalizePath(string path) =>
     path.Replace('/', Path.DirectorySeparatorChar);
 
 static bool PathContains(string path, string value) =>
-    NormalizePath(path).Contains(value);
+    path.Contains(NormalizePath(value));
 
 static bool PathEndsWith(string path, string value) =>
-    NormalizePath(path).EndsWith(value);
+    path.EndsWith(NormalizePath(value));
