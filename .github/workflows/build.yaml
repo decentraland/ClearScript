@@ -18,9 +18,8 @@ jobs:
     - name: Dump Logs
       if: always()
       run: |
-        dir V8\build\v8
-        if exist V8\build\v8\gn-x86-Release.log type V8\build\v8\gn-x86-Release.log
-        if exist V8\build\v8\build-x86-Release.log type V8\build\v8\build-x86-Release.log
+        if exist V8\build\v8\gn-Win32-Release.log type V8\build\v8\gn-Win32-Release.log
+        if exist V8\build\v8\build-Win32-Release.log type V8\build\v8\build-Win32-Release.log
         if exist V8\build\v8\gn-x64-Release.log type V8\build\v8\gn-x64-Release.log
         if exist V8\build\v8\build-x64-Release.log type V8\build\v8\build-x64-Release.log
         if exist V8\build\v8\gn-arm64-Release.log type V8\build\v8\gn-arm64-Release.log
