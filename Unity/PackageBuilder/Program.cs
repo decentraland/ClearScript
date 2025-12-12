@@ -8,40 +8,47 @@ using System.Text.RegularExpressions;
 try
 {
     string rootPath = GetGitRepositoryRootPath();
-    string srcPath = Path.Combine(rootPath, "ClearScript");
-    string dstPath = Path.Combine(rootPath, "Unity/Package/Runtime");
+    string binPath = CombinePath(rootPath, "bin/Release");
+    string pluginsPath = CombinePath(rootPath, "Unity/Package/Plugins");
+    string runtimePath = CombinePath(rootPath, "Unity/Package/Runtime");
+    string sourcePath = CombinePath(rootPath, "ClearScript");
 
     try
     {
-        foreach (string file in Directory.GetFiles(dstPath, "*.cs", SearchOption.AllDirectories))
+        foreach (string file in Directory.GetFiles(runtimePath, "*.cs",
+            SearchOption.AllDirectories))
             File.Delete(file);
     }
     catch (DirectoryNotFoundException)
     {
-        Directory.CreateDirectory(dstPath);
+        Directory.CreateDirectory(runtimePath);
     }
 
-    foreach (string file in Directory.GetFiles(srcPath, "*.cs", SearchOption.AllDirectories))
+    foreach (string inFile in Directory.GetFiles(sourcePath, "*.cs",
+        SearchOption.AllDirectories))
     {
-        if (PathContains(file, "/ICUData/")
-            || PathContains(file, "/Properties/") && !PathEndsWith(file, "/AssemblyInfo.Core.cs")
-            || PathContains(file, "/Windows/")
-            || PathContains(file, ".Net5.")
-            || PathContains(file, ".NetCore.")
-            || PathContains(file, ".NetFramework.")
-            || PathContains(file, ".UWP.")
-            || PathContains(file, ".Windows."))
+        if (PathContains(inFile, "/ICUData/")
+            || PathContains(inFile, "/Properties/")
+                && !PathEndsWith(inFile, "/AssemblyInfo.Core.cs")
+            || PathContains(inFile, "/Windows/")
+            || PathContains(inFile, ".Net5.")
+            || PathContains(inFile, ".NetCore.")
+            || PathContains(inFile, ".NetFramework.")
+            || PathContains(inFile, ".UWP.")
+            || PathContains(inFile, ".Windows."))
         {
             continue;
         }
 
-        string dstFile = string.Concat(dstPath, file.AsSpan(srcPath.Length));
-        Directory.CreateDirectory(Path.GetDirectoryName(dstFile)!);
+        string outFile = string.Concat(runtimePath,
+            inFile.AsSpan(sourcePath.Length));
 
-        if (PathEndsWith(file, "/AssemblyInfo.Core.cs"))
+        Directory.CreateDirectory(Path.GetDirectoryName(outFile)!);
+
+        if (PathEndsWith(inFile, "/AssemblyInfo.Core.cs"))
         {
-            using var reader = new StreamReader(file);
-            using var writer = new StreamWriter(dstFile);
+            using var reader = new StreamReader(inFile);
+            using var writer = new StreamWriter(outFile);
             writer.NewLine = "\n";
 
             while (true)
@@ -85,10 +92,10 @@ try
 
         endOfFile:;
         }
-        else if (PathEndsWith(file, "/V8SplitProxyManaged.cs"))
+        else if (PathEndsWith(inFile, "/V8SplitProxyManaged.cs"))
         {
-            using var reader = new StreamReader(file);
-            using var writer = new StreamWriter(dstFile);
+            using var reader = new StreamReader(inFile);
+            using var writer = new StreamWriter(outFile);
             writer.NewLine = "\n";
             var methods = new Dictionary<string, string>();
 
@@ -132,17 +139,17 @@ try
         }
         else
         {
-            File.Copy(file, dstFile);
+            File.Copy(inFile, outFile);
         }
     }
 
-    DeleteEmptyFolders(dstPath);
+
+
+    DeleteEmptyFolders(runtimePath);
 }
 catch (Exception ex)
 {
     Console.WriteLine(ex);
-    try { Console.ReadKey(true); }
-    catch (InvalidOperationException) { }
     throw;
 }
 
@@ -261,4 +268,10 @@ static bool PathContains(string path, string value) =>
     NormalizePath(path).Contains(value);
 
 static bool PathEndsWith(string path, string value) =>
-    NormalizePath(path).EndsWith(value);
+    path.EndsWith(NormalizePath(value));
+
+static void CopyFileIfExists(string sourceFileName, string destFileName)
+{
+    try { File.Copy(sourceFileName, destFileName); }
+    catch (FileNotFoundException) { }
+}
