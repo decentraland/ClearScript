@@ -14,6 +14,7 @@ namespace Microsoft.ClearScript.Util
             name = null;
             codeBase = null;
 
+#if !UNITY_5_3_OR_NEWER // There is no just "is Unity" symbol.
             using (var containerKey = Registry.ClassesRoot.OpenSubKey("TypeLib", false))
             {
                 if (containerKey is not null)
@@ -36,6 +37,7 @@ namespace Microsoft.ClearScript.Util
                     }
                 }
             }
+#endif
 
             return name is not null;
         }
