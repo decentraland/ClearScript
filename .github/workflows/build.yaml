@@ -96,11 +96,11 @@ jobs:
       run: |
         mkdir -p bin/Release/Unix
         mkdir bin/Release/netstandard1.0
-        mv ClearScriptV8.win-x64.dll ClearScriptV8.arm-x64.dll ClearScriptV8.win-x64.pdb ClearScriptV8.win-arm64.pdb bin/Release
+        mv ClearScriptV8.win-x64.dll ClearScriptV8.win-arm64.dll ClearScriptV8.win-x64.pdb ClearScriptV8.win-arm64.pdb bin/Release
         mv ClearScriptV8.linux-x64.so ClearScriptV8.linux-arm64.so ClearScriptV8.osx-x64.dylib ClearScriptV8.osx-arm64.dylib bin/Release/Unix
         mv netstandard1.0\ClearScript.V8.ICUData.dll netstandard1.0\ClearScript.V8.ICUData.pdb bin/Release/netstandard1.0
     - name: Build
-      run: dotnet run --project Unity/PackageBuilder
+      run: dotnet run Unity/PackageBuilder
     - name: Upload artifacts
       uses: actions/upload-artifact@v5
       with:
