@@ -100,7 +100,7 @@ jobs:
         mv ClearScriptV8.linux-x64.so ClearScriptV8.linux-arm64.so ClearScriptV8.osx-x64.dylib ClearScriptV8.osx-arm64.dylib bin/Release/Unix
         mv netstandard1.0/ClearScript.V8.ICUData.dll netstandard1.0/ClearScript.V8.ICUData.pdb bin/Release/netstandard1.0
     - name: Build
-      run: dotnet run Unity/PackageBuilder
+      run: dotnet run --project Unity/PackageBuilder
     - name: Upload artifacts
       uses: actions/upload-artifact@v5
       with:
