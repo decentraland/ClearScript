@@ -5,169 +5,152 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
+string rootPath = GetGitRepositoryRootPath();
+Console.WriteLine($"Root path: {rootPath}");
+
+string binPath = CombinePath(rootPath, "bin/Release");
+Console.WriteLine($"Bin path: {binPath}");
+
+string pluginsPath = CombinePath(rootPath, "Unity/Package/Plugins");
+Console.WriteLine($"Plugins path: {pluginsPath}");
+
+string runtimePath = CombinePath(rootPath, "Unity/Package/Runtime");
+Console.WriteLine($"Runtime path: {runtimePath}");
+
+string sourcePath = CombinePath(rootPath, "ClearScript");
+Console.WriteLine($"Source path: {sourcePath}");
+
+string symbolsPath = CombinePath(rootPath, "Unity/Symbols");
+Console.WriteLine($"Symbols path: {symbolsPath}");
+
 try
 {
-    string rootPath = GetGitRepositoryRootPath();
-    Console.WriteLine($"Root path: {rootPath}");
+    Console.WriteLine("Deleting runtime files");
 
-    string binPath = CombinePath(rootPath, "bin/Release");
-    Console.WriteLine($"Bin path: {binPath}");
-
-    string pluginsPath = CombinePath(rootPath, "Unity/Package/Plugins");
-    Console.WriteLine($"Plugins path: {pluginsPath}");
-
-    string runtimePath = CombinePath(rootPath, "Unity/Package/Runtime");
-    Console.WriteLine($"Runtime path: {runtimePath}");
-
-    string sourcePath = CombinePath(rootPath, "ClearScript");
-    Console.WriteLine($"Source path: {sourcePath}");
-
-    string symbolsPath = CombinePath(rootPath, "Unity/Symbols");
-    Console.WriteLine($"Symbols path: {symbolsPath}");
-
-    try
-    {
-        Console.WriteLine("Deleting runtime files");
-
-        foreach (string file in Directory.GetFiles(runtimePath, "*.cs",
-                     SearchOption.AllDirectories))
-            File.Delete(file);
-    }
-    catch (DirectoryNotFoundException)
-    {
-        Directory.CreateDirectory(runtimePath);
-    }
-
-    Console.WriteLine("Copying source files to runtime");
-
-    foreach (string inFile in Directory.GetFiles(sourcePath, "*.cs",
-                 SearchOption.AllDirectories))
-    {
-        if (PathContains(inFile, "/ICUData/")
-            || PathContains(inFile, "/Properties/")
-            && !PathEndsWith(inFile, "/AssemblyInfo.Core.cs")
-            || PathContains(inFile, "/Windows/")
-            || PathContains(inFile, ".Net5.")
-            || PathContains(inFile, ".NetCore.")
-            || PathContains(inFile, ".NetFramework.")
-            || PathContains(inFile, ".UWP.")
-            || PathContains(inFile, ".Windows."))
-        {
-            continue;
-        }
-
-        string outFile = string.Concat(runtimePath,
-            inFile.AsSpan(sourcePath.Length));
-
-        Directory.CreateDirectory(Path.GetDirectoryName(outFile)!);
-
-        if (PathEndsWith(inFile, "/AssemblyInfo.Core.cs"))
-            ReplaceInternalsVisibleToAttribute(inFile, outFile,
-                "Decentraland.ClearScript.Tests");
-        else if (PathEndsWith(inFile, "/AssemblyInfo.V8.ICUData.cs"))
-            ReplaceInternalsVisibleToAttribute(inFile, outFile,
-                "Decentraland.ClearScript");
-        else if (PathEndsWith(inFile, "/V8SplitProxyManaged.cs"))
-            AddMonoPInvokeCallbackAttribute(inFile, outFile);
-        else
-            File.Copy(inFile, outFile);
-    }
-
-    Console.WriteLine("Moving binary files to plugins");
-
-    MoveFileIfExists(CombinePath(binPath, "netstandard1.0/ClearScript.V8.ICUData.dll"),
-        CombinePath(pluginsPath, "ClearScript.V8.ICUData.dll"));
-
-    MoveFileIfExists(CombinePath(binPath, "ClearScriptV8.win-arm64.dll"),
-        CombinePath(pluginsPath, "ClearScriptV8.win-arm64.dll"));
-
-    MoveFileIfExists(CombinePath(binPath, "ClearScriptV8.win-x64.dll"),
-        CombinePath(pluginsPath, "ClearScriptV8.win-x64.dll"));
-
-    MoveFileIfExists(CombinePath(binPath, "Unix/ClearScriptV8.linux-arm64.so"),
-        CombinePath(pluginsPath, "ClearScriptV8.linux-arm64.so"));
-
-    MoveFileIfExists(CombinePath(binPath, "Unix/ClearScriptV8.linux-x64.so"),
-        CombinePath(pluginsPath, "ClearScriptV8.linux-x64.so"));
-
-    MoveFileIfExists(CombinePath(binPath, "Unix/ClearScriptV8.osx-arm64.dylib"),
-        CombinePath(pluginsPath, "ClearScriptV8.osx-arm64.dylib"));
-
-    MoveFileIfExists(CombinePath(binPath, "Unix/ClearScriptV8.osx-x64.dylib"),
-        CombinePath(pluginsPath, "ClearScriptV8.osx-x64.dylib"));
-
-    Console.WriteLine("Moving symbol files to symbols");
-
-    MoveFileIfExists(CombinePath(binPath, "ClearScriptV8.win-arm64.pdb"),
-        CombinePath(symbolsPath, "ClearScriptV8.win-arm64.pdb"));
-
-    MoveFileIfExists(CombinePath(binPath, "ClearScriptV8.win-x64.pdb"),
-        CombinePath(symbolsPath, "ClearScriptV8.win-x64.pdb"));
-
-    Console.WriteLine("Deleting empty folders in runtime");
-    DeleteEmptyFolders(runtimePath);
+    foreach (string file in Directory.GetFiles(runtimePath, "*.cs",
+        SearchOption.AllDirectories))
+        File.Delete(file);
 }
-catch (Exception ex)
+catch (DirectoryNotFoundException)
 {
-    Console.WriteLine(ex);
-    throw;
+    Directory.CreateDirectory(runtimePath);
 }
+
+Console.WriteLine("Copying source files to runtime");
+
+foreach (string inFile in Directory.GetFiles(sourcePath, "*.cs",
+    SearchOption.AllDirectories))
+{
+    if (PathContains(inFile, "/ICUData/")
+        || PathContains(inFile, "/Properties/")
+        && !PathEndsWith(inFile, "/AssemblyInfo.Core.cs")
+        || PathContains(inFile, "/Windows/")
+        || PathContains(inFile, ".Net5.")
+        || PathContains(inFile, ".NetCore.")
+        || PathContains(inFile, ".NetFramework.")
+        || PathContains(inFile, ".UWP.")
+        || PathContains(inFile, ".Windows."))
+    {
+        continue;
+    }
+
+    string outFile = string.Concat(runtimePath,
+        inFile.AsSpan(sourcePath.Length));
+
+    Directory.CreateDirectory(Path.GetDirectoryName(outFile)!);
+
+    if (PathEndsWith(inFile, "/AssemblyInfo.Core.cs"))
+        ReplaceInternalsVisibleToAttribute(inFile, outFile,
+            "Decentraland.ClearScript.Tests");
+    else if (PathEndsWith(inFile, "/AssemblyInfo.V8.ICUData.cs"))
+        ReplaceInternalsVisibleToAttribute(inFile, outFile,
+            "Decentraland.ClearScript");
+    else if (PathEndsWith(inFile, "/V8SplitProxyManaged.cs"))
+        AddMonoPInvokeCallbackAttribute(inFile, outFile);
+    else
+        File.Copy(inFile, outFile);
+}
+
+Console.WriteLine("Moving binary files to plugins");
+Directory.CreateDirectory(symbolsPath);
+
+MoveFileIfExists(CombinePath(binPath, "netstandard1.0/ClearScript.V8.ICUData.dll"),
+    CombinePath(pluginsPath, "ClearScript.V8.ICUData.dll"));
+
+MoveFileIfExists(CombinePath(binPath, "ClearScriptV8.win-arm64.dll"),
+    CombinePath(pluginsPath, "ClearScriptV8.win-arm64.dll"));
+
+MoveFileIfExists(CombinePath(binPath, "ClearScriptV8.win-x64.dll"),
+    CombinePath(pluginsPath, "ClearScriptV8.win-x64.dll"));
+
+MoveFileIfExists(CombinePath(binPath, "Unix/ClearScriptV8.linux-arm64.so"),
+    CombinePath(pluginsPath, "ClearScriptV8.linux-arm64.so"));
+
+MoveFileIfExists(CombinePath(binPath, "Unix/ClearScriptV8.linux-x64.so"),
+    CombinePath(pluginsPath, "ClearScriptV8.linux-x64.so"));
+
+MoveFileIfExists(CombinePath(binPath, "Unix/ClearScriptV8.osx-arm64.dylib"),
+    CombinePath(pluginsPath, "ClearScriptV8.osx-arm64.dylib"));
+
+MoveFileIfExists(CombinePath(binPath, "Unix/ClearScriptV8.osx-x64.dylib"),
+    CombinePath(pluginsPath, "ClearScriptV8.osx-x64.dylib"));
+
+Console.WriteLine("Moving symbol files to symbols");
+
+MoveFileIfExists(CombinePath(binPath, "ClearScriptV8.win-arm64.pdb"),
+    CombinePath(symbolsPath, "ClearScriptV8.win-arm64.pdb"));
+
+MoveFileIfExists(CombinePath(binPath, "ClearScriptV8.win-x64.pdb"),
+    CombinePath(symbolsPath, "ClearScriptV8.win-x64.pdb"));
+
+Console.WriteLine("Deleting empty folders in runtime");
+DeleteEmptyFolders(runtimePath);
 
 // TODO: Write tests in MSTest and convert them to NUnit.
-/*try
+/*string srcPath = @"..\..\..\..\..\ClearScriptTest";
+string dstPath = @"..\..\..\..\Package\Tests\Runtime";
+
+foreach (string file in Directory.GetFiles(dstPath, "*.cs", SearchOption.AllDirectories))
 {
-    string srcPath = @"..\..\..\..\..\ClearScriptTest";
-    string dstPath = @"..\..\..\..\Package\Tests\Runtime";
-
-    foreach (string file in Directory.GetFiles(dstPath, "*.cs", SearchOption.AllDirectories))
-    {
-        File.Delete(file);
-    }
-
-    foreach (string file in Directory.GetFiles(srcPath, "*.cs", SearchOption.AllDirectories))
-    {
-        if (file.Contains(".NetCore.")
-            || file.Contains(".NetFramework."))
-        {
-            continue;
-        }
-
-        string dstFile = string.Concat(dstPath, file.AsSpan(srcPath.Length));
-        Directory.CreateDirectory(Path.GetDirectoryName(dstFile)!);
-        using var reader = new StreamReader(file);
-        using var writer = new StreamWriter(dstFile);
-        writer.NewLine = "\n";
-
-        while (true)
-        {
-            string? line = reader.ReadLine();
-
-            if (line == null)
-                break;
-            else if (line == "using Microsoft.VisualStudio.TestTools.UnitTesting;")
-                writer.WriteLine("using NUnit.Framework;");
-            else if (line == "    [TestClass]")
-                writer.WriteLine("    [TestFixture]");
-            else if (line == "        [TestInitialize]")
-                writer.WriteLine("        [SetUp]");
-            else if (line == "        [TestCleanup]")
-                writer.WriteLine("        [TearDown]");
-            else if (line.StartsWith("        [TestMethod, TestCategory(\""))
-                writer.WriteLine("        [Test]");
-            else
-                writer.WriteLine(line);
-        }
-    }
-
-    DeleteEmptyFolders(dstPath);
+    File.Delete(file);
 }
-catch (Exception ex)
+
+foreach (string file in Directory.GetFiles(srcPath, "*.cs", SearchOption.AllDirectories))
 {
-    Console.WriteLine(ex);
-    try { Console.ReadKey(true); }
-    catch (InvalidOperationException) { }
-    throw;
-}*/
+    if (file.Contains(".NetCore.")
+        || file.Contains(".NetFramework."))
+    {
+        continue;
+    }
+
+    string dstFile = string.Concat(dstPath, file.AsSpan(srcPath.Length));
+    Directory.CreateDirectory(Path.GetDirectoryName(dstFile)!);
+    using var reader = new StreamReader(file);
+    using var writer = new StreamWriter(dstFile);
+    writer.NewLine = "\n";
+
+    while (true)
+    {
+        string? line = reader.ReadLine();
+
+        if (line == null)
+            break;
+        else if (line == "using Microsoft.VisualStudio.TestTools.UnitTesting;")
+            writer.WriteLine("using NUnit.Framework;");
+        else if (line == "    [TestClass]")
+            writer.WriteLine("    [TestFixture]");
+        else if (line == "        [TestInitialize]")
+            writer.WriteLine("        [SetUp]");
+        else if (line == "        [TestCleanup]")
+            writer.WriteLine("        [TearDown]");
+        else if (line.StartsWith("        [TestMethod, TestCategory(\""))
+            writer.WriteLine("        [Test]");
+        else
+            writer.WriteLine(line);
+    }
+}
+
+DeleteEmptyFolders(dstPath);*/
 
 static void AddMonoPInvokeCallbackAttribute(string inFile, string outFile)
 {
