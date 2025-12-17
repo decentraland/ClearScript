@@ -2,7 +2,7 @@ name: Build Unity package
 on: workflow_dispatch
 jobs:
   windows:
-    name: Build native binaries for Windows
+    name: Windows binaries
     runs-on: windows-2022
     defaults:
       run:
@@ -26,11 +26,12 @@ jobs:
       run: |
         path %PATH%;C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin
         msbuild -t:Restore -t:ClearScriptV8\ClearScriptV8_win-x64 -t:ClearScriptV8\ClearScriptV8_win-arm64 "-t:_NET Standard\ClearScript_V8_ICUData" -p:Configuration=Release -m ClearScript.sln
-    - name: Upload
-      uses: actions/upload-artifact@v4
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v5
       with:
         name: windows-binaries
         if-no-files-found: error
+        retention-days: 1
         path: |
           bin\Release\ClearScriptV8.win-x64.dll
           bin\Release\ClearScriptV8.win-arm64.dll
@@ -39,7 +40,7 @@ jobs:
           bin\Release\ClearScriptV8.win-arm64.pdb
           bin\Release\netstandard1.0\ClearScript.V8.ICUData.pdb
   linux:
-    name: Build native binaries for Linux
+    name: Linux binaries
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout
@@ -52,16 +53,17 @@ jobs:
       run: |
         make -f Unix/Makefile
         make -f Unix/Makefile CPU=arm64
-    - name: Upload
-      uses: actions/upload-artifact@v4
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v5
       with:
         name: linux-binaries
         if-no-files-found: error
+        retention-days: 1
         path: |
           bin/Release/Unix/ClearScriptV8.linux-x64.so
           bin/Release/Unix/ClearScriptV8.linux-arm64.so
   macos:
-    name: Build native binaries for macOS
+    name: macOS binaries
     runs-on: macos-latest
     steps:
     - name: Checkout
@@ -70,11 +72,40 @@ jobs:
       run: |
         make -f Unix/Makefile CPU=arm64
         make -f Unix/Makefile CPU=x64
-    - name: Upload
-      uses: actions/upload-artifact@v4
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v5
       with:
         name: macos-binaries
         if-no-files-found: error
+        retention-days: 1
         path: |
           bin/Release/Unix/ClearScriptV8.osx-x64.dylib
           bin/Release/Unix/ClearScriptV8.osx-arm64.dylib
+  unity:
+    name: Unity package
+    runs-on: ubuntu-latest
+    needs: [windows, linux, macos]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+    - name: Download artifacts
+      uses: actions/download-artifact@v6
+      with:
+        merge-multiple: true
+    - name: Move artifacts
+      run: |
+        mkdir -p bin/Release/Unix
+        mkdir bin/Release/netstandard1.0
+        mv ClearScriptV8.win-x64.dll ClearScriptV8.win-arm64.dll ClearScriptV8.win-x64.pdb ClearScriptV8.win-arm64.pdb bin/Release
+        mv ClearScriptV8.linux-x64.so ClearScriptV8.linux-arm64.so ClearScriptV8.osx-x64.dylib ClearScriptV8.osx-arm64.dylib bin/Release/Unix
+        mv netstandard1.0/ClearScript.V8.ICUData.dll netstandard1.0/ClearScript.V8.ICUData.pdb bin/Release/netstandard1.0
+    - name: Build
+      run: dotnet run --project Unity/PackageBuilder
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v5
+      with:
+        name: ClearScript-${{ github.sha }}
+        if-no-files-found: error
+        path: |
+          Unity/Package
+          Unity/Symbols
