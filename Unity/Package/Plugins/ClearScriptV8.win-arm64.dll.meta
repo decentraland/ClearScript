@@ -22,7 +22,7 @@ PluginImporter:
     Editor:
       enabled: 1
       settings:
-        CPU: AnyCPU
+        CPU: ARM64
         DefaultValueInitialized: true
         OS: Windows
     Linux64:
@@ -40,7 +40,7 @@ PluginImporter:
     Win64:
       enabled: 1
       settings:
-        CPU: AnyCPU
+        CPU: ARM64
   userData: 
   assetBundleName: 
   assetBundleVariant: 

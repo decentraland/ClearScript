@@ -80,7 +80,6 @@ goto Exit
 :CheckMSVS
 if "%VisualStudioVersion%"=="16.0" goto CheckMSVSDone
 if "%VisualStudioVersion%"=="17.0" goto CheckMSVSDone
-if "%VisualStudioVersion%"=="18.0" goto CheckMSVSDone
 echo Error: This script requires a Visual Studio 2019 or 2022 Developer Command Prompt.
 echo Browse to http://www.visualstudio.com for more information.
 goto Exit
@@ -192,9 +191,6 @@ if errorlevel 1 goto Error
 :ApplyV8Patch
 call git apply --reject --ignore-whitespace ..\..\V8Patch.txt 2>applyV8Patch.log
 if errorlevel 1 goto Error
-:ApplyVS2026Patch
-call git apply --reject --ignore-whitespace ..\..\VS2026Patch.txt 2>applyVS2026Patch.log
-if errorlevel 1 goto Error
 cd ..
 :ApplyPatchesDone
 
@@ -223,6 +219,26 @@ call git diff --ignore-space-change --ignore-space-at-eol >V8Patch.txt 2>createV
 if errorlevel 1 goto Error
 cd ..
 :CreatePatchesDone
+
+:Build32Bit
+cd v8
+setlocal
+call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x64_x86 >nul
+if errorlevel 1 goto Build32BitError
+echo Building V8 (x86) ...
+call gn gen out\Win32\%mode% --args="fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=%isdebug% target_cpu=\"x86\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_fuzztest=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_target_cpu=\"x86\" v8_use_external_startup_data=false" >gn-Win32-%mode%.log 2>&1
+if errorlevel 1 goto Build32BitError
+call gn args out\Win32\%mode% --list >out\Win32\%mode%\allArgs.txt
+if errorlevel 1 goto Build32BitError
+call ninja -C out\Win32\%mode% obj\v8_monolith.lib >build-Win32-%mode%.log
+if errorlevel 1 goto Build32BitError
+endlocal
+cd ..
+goto Build32BitDone
+:Build32BitError
+endlocal
+goto Error
+:Build32BitDone
 
 :Build64Bit
 cd v8
