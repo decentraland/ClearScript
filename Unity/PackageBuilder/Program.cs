@@ -62,9 +62,6 @@ foreach (string inFile in Directory.GetFiles(sourcePath, "*.cs",
     if (PathEndsWith(inFile, "/AssemblyInfo.Core.cs"))
         ReplaceInternalsVisibleToAttribute(inFile, outFile,
             "Decentraland.ClearScript.Tests");
-    else if (PathEndsWith(inFile, "/AssemblyInfo.V8.ICUData.cs"))
-        ReplaceInternalsVisibleToAttribute(inFile, outFile,
-            "Decentraland.ClearScript");
     else if (PathEndsWith(inFile, "/V8SplitProxyManaged.cs"))
         AddMonoPInvokeCallbackAttribute(inFile, outFile);
     else
