@@ -3,10 +3,10 @@
 # Reproduce the Linux CI build locally (intended for WSL / Ubuntu 22.04).
 # Usage: ./Unix/build-local.sh [x64|arm64|all]    (default: x64)
 #
-# Prerequisites (same as docs/Details/Build.html):
-#   git, .NET 8.0 SDK, clang, make, pkgconf
-# arm64 cross-build tooling (g++-10-aarch64-linux-gnu) is installed
-# automatically on demand.
+# Installs all prerequisites listed in docs/Details/Build.html
+# (git, .NET 8.0 SDK, clang, make, pkgconf) plus what V8's depot_tools
+# needs (python3, curl, build-essential). The arm64 cross-build
+# toolchain (g++-10-aarch64-linux-gnu) is installed on demand.
 
 set -euo pipefail
 
@@ -43,11 +43,51 @@ dump_logs() {
 
 trap dump_logs ERR
 
+require_apt() {
+    if ! command -v apt-get >/dev/null 2>&1; then
+        echo "This script targets Ubuntu/Debian (apt). Install prerequisites manually." >&2
+        exit 1
+    fi
+}
+
+apt_updated=false
+apt_install() {
+    # apt_install pkg1 pkg2 ...
+    if [[ "$apt_updated" == false ]]; then
+        sudo apt-get update
+        apt_updated=true
+    fi
+    sudo apt-get install -y "$@"
+}
+
+ensure_build_prereqs() {
+    # Map each required tool to the apt package that provides it.
+    local -a packages=()
+    command -v git      >/dev/null 2>&1 || packages+=(git)
+    command -v make     >/dev/null 2>&1 || packages+=(build-essential)
+    command -v clang    >/dev/null 2>&1 || packages+=(clang)
+    command -v pkgconf  >/dev/null 2>&1 || packages+=(pkgconf)
+    command -v python3  >/dev/null 2>&1 || packages+=(python3)
+    command -v curl     >/dev/null 2>&1 || packages+=(curl)
+    if (( ${#packages[@]} > 0 )); then
+        echo "Installing build prerequisites: ${packages[*]} ..."
+        apt_install "${packages[@]}"
+    fi
+}
+
+ensure_dotnet8() {
+    if command -v dotnet >/dev/null 2>&1 \
+            && dotnet --list-sdks 2>/dev/null | grep -q '^8\.'; then
+        return
+    fi
+    echo "Installing .NET 8.0 SDK ..."
+    apt_install dotnet-sdk-8.0
+}
+
 ensure_arm64_toolchain() {
     if ! command -v aarch64-linux-gnu-g++-10 >/dev/null 2>&1; then
-        echo "Installing arm64 cross-build tools (sudo apt-get) ..."
-        sudo apt-get update
-        sudo apt-get install -y g++-10-aarch64-linux-gnu
+        echo "Installing arm64 cross-build tools ..."
+        apt_install g++-10-aarch64-linux-gnu
     fi
 }
 
@@ -60,6 +100,10 @@ build_one() {
         make -f Unix/Makefile CPU="$target_cpu"
     fi
 }
+
+require_apt
+ensure_build_prereqs
+ensure_dotnet8
 
 case "$cpu" in
     x64)
