@@ -15,7 +15,7 @@ index a5c7d847781..c37ff57facc 100644
  
    defines = []
 -  cflags = []
-+  cflags = [ "-D_SILENCE_CXX20_OLD_SHARED_PTR_ATOMIC_SUPPORT_DEPRECATION_WARNING", "-DV8_TLS_USED_IN_LIBRARY", "-Wno-cast-function-type-mismatch", "-Wno-deprecated-this-capture" ]
++  cflags = [ "-D_SILENCE_CXX20_OLD_SHARED_PTR_ATOMIC_SUPPORT_DEPRECATION_WARNING", "-DV8_TLS_USED_IN_LIBRARY", "-Wno-cast-function-type-mismatch", "-Wno-deprecated-this-capture", "-Wno-deprecated-declarations" ]
    ldflags = []
  
    if (v8_current_cpu == "arm") {
