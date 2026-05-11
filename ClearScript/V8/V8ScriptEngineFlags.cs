@@ -145,7 +145,7 @@ namespace Microsoft.ClearScript.V8
 
         /// <summary>
         /// Specifies that the
-        /// <c><see href="https://microsoft.github.io/ClearScript/2024/03/21/performance-api.html">Performance</see></c>
+        /// <c><see href="https://clearscript.clearfoundry.net/2024/03/21/performance-api.html">Performance</see></c>
         /// object is to be added to the script engine's global namespace. This object provides a
         /// set of low-level native facilities for performance-sensitive scripts.
         /// </summary>

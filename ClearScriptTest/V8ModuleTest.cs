@@ -24,6 +24,7 @@ namespace Microsoft.ClearScript.Test
         [TestInitialize]
         public void TestInitialize()
         {
+            BaseTestInitialize();
             engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDynamicModuleImports | V8ScriptEngineFlags.EnableDebugging);
         }
 
@@ -240,7 +241,7 @@ namespace Microsoft.ClearScript.Test
         {
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableWebLoading;
             Assert.AreEqual(123 + 456, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
-                import * as Arithmetic from 'https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Arithmetic/Arithmetic.js';
+                import * as Arithmetic from 'https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Arithmetic/Arithmetic.js';
                 import.meta.setResult(Arithmetic.Add(123, 456));
             "));
         }
@@ -250,7 +251,7 @@ namespace Microsoft.ClearScript.Test
         {
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableWebLoading;
             Assert.AreEqual(25 * 25, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
-                import * as Geometry from 'https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry/GeometryWithDynamicImport.js';
+                import * as Geometry from 'https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry/GeometryWithDynamicImport.js';
                 import.meta.setResult(new Geometry.Square(25).Area);
             "));
         }
@@ -260,7 +261,7 @@ namespace Microsoft.ClearScript.Test
         {
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableWebLoading;
             Assert.AreEqual(25 * 25, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
-                import * as Geometry from 'https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry/Geometry.js';
+                import * as Geometry from 'https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry/Geometry.js';
                 import.meta.setResult(new Geometry.Square(25).Area);
             "));
         }
@@ -269,7 +270,7 @@ namespace Microsoft.ClearScript.Test
         public void V8Module_Standard_Web_Disabled()
         {
             TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
-                import * as Geometry from 'https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry/Geometry.js';
+                import * as Geometry from 'https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry/Geometry.js';
                 new Geometry.Square(25).Area;
             "));
         }
@@ -278,8 +279,8 @@ namespace Microsoft.ClearScript.Test
         public void V8Module_Standard_Web_PathlessImport()
         {
             engine.DocumentSettings.SearchPath = string.Join(";",
-                "https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Arithmetic",
-                "https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry"
+                "https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Arithmetic",
+                "https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry"
             );
 
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableWebLoading;
@@ -293,8 +294,8 @@ namespace Microsoft.ClearScript.Test
         public void V8Module_Standard_Web_PathlessImport_MixedImport()
         {
             engine.DocumentSettings.SearchPath = string.Join(";",
-                "https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Arithmetic",
-                "https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry"
+                "https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Arithmetic",
+                "https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry"
             );
 
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableWebLoading;
@@ -308,8 +309,8 @@ namespace Microsoft.ClearScript.Test
         public void V8Module_Standard_Web_PathlessImport_Nested()
         {
             engine.DocumentSettings.SearchPath = string.Join(";",
-                "https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Arithmetic",
-                "https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry"
+                "https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Arithmetic",
+                "https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry"
             );
 
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableWebLoading;
@@ -323,8 +324,8 @@ namespace Microsoft.ClearScript.Test
         public void V8Module_Standard_Web_PathlessImport_Disabled()
         {
             engine.DocumentSettings.SearchPath = string.Join(";",
-                "https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Arithmetic",
-                "https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry"
+                "https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Arithmetic",
+                "https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry"
             );
 
             TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
@@ -340,7 +341,7 @@ namespace Microsoft.ClearScript.Test
             engine.Evaluate(@"
                 (async function () {
                     try {
-                        let Arithmetic = await import('https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Arithmetic/Arithmetic.js');
+                        let Arithmetic = await import('https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Arithmetic/Arithmetic.js');
                         result = Arithmetic.Add(123, 456);
                     }
                     catch (exception) {
@@ -360,7 +361,7 @@ namespace Microsoft.ClearScript.Test
             engine.Evaluate(@"
                 (async function () {
                     try {
-                        let Geometry = await import('https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry/Geometry.js');
+                        let Geometry = await import('https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry/Geometry.js');
                         result = new Geometry.Square(25).Area;
                     }
                     catch (exception) {
@@ -380,7 +381,7 @@ namespace Microsoft.ClearScript.Test
             engine.Evaluate(@"
                 (async function () {
                     try {
-                        let Geometry = await import('https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry/GeometryWithDynamicImport.js');
+                        let Geometry = await import('https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry/GeometryWithDynamicImport.js');
                         result = new Geometry.Square(25).Area;
                     }
                     catch (exception) {
@@ -399,7 +400,7 @@ namespace Microsoft.ClearScript.Test
             engine.Evaluate(@"
                 (async function () {
                     try {
-                        let Geometry = await import('https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry/GeometryWithDynamicImport.js');
+                        let Geometry = await import('https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry/GeometryWithDynamicImport.js');
                         result = new Geometry.Square(25).Area;
                     }
                     catch (exception) {
@@ -417,7 +418,7 @@ namespace Microsoft.ClearScript.Test
         {
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableWebLoading;
             Assert.AreEqual(25 * 25, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
-                import * as Geometry from 'https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry/Geometry';
+                import * as Geometry from 'https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry/Geometry';
                 import.meta.setResult(new Geometry.Square(25).Area);
             "));
         }
@@ -1033,7 +1034,7 @@ namespace Microsoft.ClearScript.Test
         {
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableWebLoading;
             Assert.AreEqual(123 + 456, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.CommonJS }, @"
-                let Arithmetic = require('https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/CommonJS/Arithmetic/Arithmetic');
+                let Arithmetic = require('https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/CommonJS/Arithmetic/Arithmetic');
                 return Arithmetic.Add(123, 456);
             "));
         }
@@ -1043,7 +1044,7 @@ namespace Microsoft.ClearScript.Test
         {
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableWebLoading;
             Assert.AreEqual(25 * 25, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.CommonJS }, @"
-                let Geometry = require('https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/CommonJS/Geometry/Geometry');
+                let Geometry = require('https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/CommonJS/Geometry/Geometry');
                 return new Geometry.Square(25).Area;
             "));
         }
@@ -1052,7 +1053,7 @@ namespace Microsoft.ClearScript.Test
         public void V8Module_CommonJS_Web_Disabled()
         {
             TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate(new DocumentInfo { Category = ModuleCategory.CommonJS }, @"
-                let Geometry = require('https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/CommonJS/Geometry/Geometry');
+                let Geometry = require('https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/CommonJS/Geometry/Geometry');
                 return new Geometry.Square(25).Area;
             "));
         }
@@ -1061,8 +1062,8 @@ namespace Microsoft.ClearScript.Test
         public void V8Module_CommonJS_Web_PathlessImport()
         {
             engine.DocumentSettings.SearchPath = string.Join(";",
-                "https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/CommonJS/Arithmetic",
-                "https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/CommonJS/Geometry"
+                "https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/CommonJS/Arithmetic",
+                "https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/CommonJS/Geometry"
             );
 
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableWebLoading;
@@ -1076,8 +1077,8 @@ namespace Microsoft.ClearScript.Test
         public void V8Module_CommonJS_Web_PathlessImport_Nested()
         {
             engine.DocumentSettings.SearchPath = string.Join(";",
-                "https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/CommonJS/Arithmetic",
-                "https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/CommonJS/Geometry"
+                "https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/CommonJS/Arithmetic",
+                "https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/CommonJS/Geometry"
             );
 
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableWebLoading;
@@ -1091,8 +1092,8 @@ namespace Microsoft.ClearScript.Test
         public void V8Module_CommonJS_Web_PathlessImport_Disabled()
         {
             engine.DocumentSettings.SearchPath = string.Join(";",
-                "https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/CommonJS/Arithmetic",
-                "https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/CommonJS/Geometry"
+                "https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/CommonJS/Arithmetic",
+                "https://raw.githubusercontent.com/ClearFoundry/ClearScript/master/ClearScriptTest/JavaScript/CommonJS/Geometry"
             );
 
             TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate(new DocumentInfo { Category = ModuleCategory.CommonJS }, @"

@@ -25,11 +25,11 @@ engine.AddHostType(typeof(Console));
 
 # Document Categories
 
-ClearScript uses [_document categories_](https://microsoft.github.io/ClearScript/Reference/html/T_Microsoft_ClearScript_DocumentCategory.htm) to distinguish between the following document types:
+ClearScript uses [_document categories_](https://clearscript.clearfoundry.net/Reference/html/T_Microsoft_ClearScript_DocumentCategory.htm) to distinguish between the following document types:
 - JavaScript 
-module – [`ModuleCategory.Standard`](https://microsoft.github.io/ClearScript/Reference/html/P_Microsoft_ClearScript_JavaScript_ModuleCategory_Standard.htm)
-- CommonJS module – [`ModuleCategory.CommonJS`](https://microsoft.github.io/ClearScript/Reference/html/P_Microsoft_ClearScript_JavaScript_ModuleCategory_CommonJS.htm)
-- Normal script – [`DocumentCategory.Script`](https://microsoft.github.io/ClearScript/Reference/html/P_Microsoft_ClearScript_DocumentCategory_Script.htm)
+module – [`ModuleCategory.Standard`](https://clearscript.clearfoundry.net/Reference/html/P_Microsoft_ClearScript_JavaScript_ModuleCategory_Standard.htm)
+- CommonJS module – [`ModuleCategory.CommonJS`](https://clearscript.clearfoundry.net/Reference/html/P_Microsoft_ClearScript_JavaScript_ModuleCategory_CommonJS.htm)
+- Normal script – [`DocumentCategory.Script`](https://clearscript.clearfoundry.net/Reference/html/P_Microsoft_ClearScript_DocumentCategory_Script.htm)
 
 However, it has no way to _detect_ the category of a document. Instead, the host must specify the category when it initiates script execution:
 
@@ -67,7 +67,7 @@ exports.Rectangle = class {
 
 Normally, the sample code above would result in a [`SyntaxError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SyntaxError) with a message such as "The requested module 'Geometry' does not provide an export named 'Rectangle'".
 
-To allow our example to work, we must _override_ **Geometry**'s document category. To do that, we can use a [document load callback](https://microsoft.github.io/ClearScript/Reference/html/P_Microsoft_ClearScript_DocumentSettings_LoadCallback.htm):
+To allow our example to work, we must _override_ **Geometry**'s document category. To do that, we can use a [document load callback](https://clearscript.clearfoundry.net/Reference/html/P_Microsoft_ClearScript_DocumentSettings_LoadCallback.htm):
 
 {% highlight C# %}
 

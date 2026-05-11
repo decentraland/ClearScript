@@ -271,6 +271,17 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         );
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate void RawDisposeHostObject(
+            [In] IntPtr pObject
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate void RawAsyncDisposeHostObject(
+            [In] IntPtr pObject,
+            [In] V8Value.Ptr pResult
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawGetFastHostObjectNamedProperty(
             [In] IntPtr pObject,
             [In] StdString.Ptr pName,
@@ -354,6 +365,17 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawGetFastHostObjectAsyncEnumerator(
+            [In] IntPtr pObject,
+            [In] V8Value.FastResult.Ptr pResult
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate void RawDisposeFastHostObject(
+            [In] IntPtr pObject
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate void RawAsyncDisposeFastHostObject(
             [In] IntPtr pObject,
             [In] V8Value.FastResult.Ptr pResult
         );
@@ -505,6 +527,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
                 GetMethodPair<RawGetHostObjectEnumerator>(GetHostObjectEnumerator),
                 GetMethodPair<RawGetHostObjectAsyncEnumerator>(GetHostObjectAsyncEnumerator),
+                GetMethodPair<RawDisposeHostObject>(DisposeHostObject),
+                GetMethodPair<RawAsyncDisposeHostObject>(AsyncDisposeHostObject),
 
             #if NET5_0_OR_GREATER
                 (IntPtr.Zero, GetFastHostObjectNamedPropertyFastMethodPtr),
@@ -538,6 +562,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
                 GetMethodPair<RawGetFastHostObjectEnumerator>(GetFastHostObjectEnumerator),
                 GetMethodPair<RawGetFastHostObjectAsyncEnumerator>(GetFastHostObjectAsyncEnumerator),
+                GetMethodPair<RawDisposeFastHostObject>(DisposeFastHostObject),
+                GetMethodPair<RawAsyncDisposeFastHostObject>(AsyncDisposeFastHostObject),
 
                 GetMethodPair<RawQueueNativeCallback>(QueueNativeCallback),
                 GetMethodPair<RawCreateNativeCallbackTimer>(CreateNativeCallbackTimer),
@@ -922,6 +948,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        private static void DisposeHostObject(IntPtr pObject)
+        {
+            try
+            {
+                V8ProxyHelpers.DisposeHostObject(pObject);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+            }
+        }
+
+        private static void AsyncDisposeHostObject(IntPtr pObject, V8Value.Ptr pResult)
+        {
+            try
+            {
+                V8Value.Set(pResult, V8ProxyHelpers.AsyncDisposeHostObject(pObject));
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+            }
+        }
+
         private static void GetFastHostObjectNamedProperty(IntPtr pObject, StdString.Ptr pName, V8Value.FastResult.Ptr pValue, out bool isCacheable)
         {
             try
@@ -1084,6 +1134,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             try
             {
                 V8ProxyHelpers.GetFastHostObjectAsyncEnumerator(pObject, pResult);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+            }
+        }
+
+        private static void DisposeFastHostObject(IntPtr pObject)
+        {
+            try
+            {
+                V8ProxyHelpers.DisposeFastHostObject(pObject);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+            }
+        }
+
+        private static void AsyncDisposeFastHostObject(IntPtr pObject, V8Value.FastResult.Ptr pResult)
+        {
+            try
+            {
+                V8ProxyHelpers.AsyncDisposeFastHostObject(pObject, pResult);
             }
             catch (Exception exception)
             {

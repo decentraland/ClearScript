@@ -28,7 +28,7 @@ namespace Microsoft.ClearScript
         public Invocability? TargetInvocability;
     }
 
-    internal class HostTargetMemberDataWithContext : HostTargetMemberData
+    internal sealed class HostTargetMemberDataWithContext : HostTargetMemberData
     {
         public readonly CustomAttributeLoader CustomAttributeLoader;
         public readonly Type AccessContext;

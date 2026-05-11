@@ -26,7 +26,7 @@ namespace Microsoft.ClearScript.Test
                 Exception caughtException = null;
                 var found = false;
 
-                while (true)
+                for (var iteration = 0; iteration < 256; iteration++)
                 {
                     var thread = new Thread(() =>
                     {
@@ -68,7 +68,10 @@ namespace Microsoft.ClearScript.Test
                     }
                 }
 
-                Assert.IsTrue(found);
+                if (!found)
+                {
+                    Assert.Inconclusive("Could not replicate test condition: thread stack sufficiently low in address space");
+                }
             }
             finally
             {

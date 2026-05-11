@@ -5,7 +5,7 @@
         <UseWPF>true</UseWPF>
         <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-        <LangVersion>9.0</LangVersion>
+        <LangVersion>10.0</LangVersion>
         <ResolveComReferenceSilent>true</ResolveComReferenceSilent>
     </PropertyGroup>
 

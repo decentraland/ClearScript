@@ -41,9 +41,10 @@ struct HostObjectUtil final: StaticBase
 
     static V8Value Invoke(void* pvObject, bool asConstructor, size_t argCount, const V8Value* pArgs);
     static V8Value InvokeMethod(void* pvObject, const StdString& name, size_t argCount, const V8Value* pArgs);
-
     static V8Value GetEnumerator(void* pvObject);
     static V8Value GetAsyncEnumerator(void* pvObject);
+    static void Dispose(void* pvObject);
+    static V8Value AsyncDispose(void* pvObject);
 
     static void* CreateV8ObjectCache();
     static void CacheV8Object(void* pvCache, void* pvObject, void* pvV8Object);
@@ -106,7 +107,8 @@ struct FastHostObjectUtil final: StaticBase
     static void GetPropertyIndices(void* pvObject, std::vector<int32_t>& indices);
 
     static V8Value Invoke(void* pvObject, bool asConstructor, size_t argCount, const V8Value* pArgs);
-
     static V8Value GetEnumerator(void* pvObject);
     static V8Value GetAsyncEnumerator(void* pvObject);
+    static void Dispose(void* pvObject);
+    static V8Value AsyncDispose(void* pvObject);
 };

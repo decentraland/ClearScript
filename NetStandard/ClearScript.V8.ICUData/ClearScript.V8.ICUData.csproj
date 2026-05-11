@@ -4,7 +4,7 @@
         <TargetFrameworks>netstandard1.0</TargetFrameworks>
         <RootNamespace>Microsoft.ClearScript.V8.ICUData</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-        <LangVersion>9.0</LangVersion>
+        <LangVersion>10.0</LangVersion>
         <NoWarn>NETSDK1215</NoWarn>
     </PropertyGroup>
 

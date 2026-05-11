@@ -114,7 +114,7 @@ namespace Microsoft.ClearScript.Test
             {
                 Assert.IsNotNull(process);
                 process.WaitForExit();
-                Assert.AreEqual(0, process.ExitCode, process.StandardError.ReadToEnd());
+                Assert.IsTrue(0 <= process.ExitCode, process.StandardError.ReadToEnd());
             }
         }
 

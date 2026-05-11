@@ -5,12 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
-using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.Expando;
 using Microsoft.ClearScript.Util.COM;
 
 namespace Microsoft.ClearScript.Util
@@ -40,76 +38,58 @@ namespace Microsoft.ClearScript.Util
         {
             try
             {
-                // For COM member access, use IReflect/IExpando if possible. This works around
-                // some dynamic binder bugs and limitations observed during batch test runs.
+                // For COM member access, use IDispatchEx if possible. This works around bugs in
+                // the dynamic binder, and IExpando-over-IDispatchEx interop is both problematic
+                // and no longer supported in recent .NET runtimes.
 
-                if ((target is IReflect reflect) && reflect.GetType().IsCOMObject)
+                if ((target is IDispatchEx dispatchEx) && dispatchEx.GetType().IsCOMObject)
                 {
                     if (binder is GetMemberBinder getMemberBinder)
                     {
-                        if (TryGetProperty(reflect, getMemberBinder.Name, getMemberBinder.IgnoreCase, args, out result))
+                        var value = dispatchEx.GetProperty(getMemberBinder.Name, getMemberBinder.IgnoreCase, args);
+                        result = (value is Nonexistent) ? Undefined.Value : value;
+                        return true;
+                    }
+                    
+                    if (binder is SetMemberBinder setMemberBinder)
+                    {
+                        dispatchEx.SetProperty(setMemberBinder.Name, setMemberBinder.IgnoreCase, args);
+                        result = args[args.Length - 1];
+                        return true;
+                    }
+                    
+                    if (binder is CreateInstanceBinder)
+                    {
+                        result = dispatchEx.Invoke(true, args);
+                        return true;
+                    }
+                    
+                    if (binder is InvokeBinder)
+                    {
+                        result = dispatchEx.Invoke(false, args);
+                        return true;
+                    }
+                    
+                    if (binder is InvokeMemberBinder invokeMemberBinder)
+                    {
+                        result = dispatchEx.InvokeMethod(invokeMemberBinder.Name, invokeMemberBinder.IgnoreCase, args);
+                        return true;
+                    }
+                    
+                    if ((args is not null) && (args.Length > 0))
+                    {
+                        if (binder is GetIndexBinder)
                         {
+                            var value = dispatchEx.GetProperty(args[0].ToString(), false, args.Skip(1).ToArray());
+                            result = (value is Nonexistent) ? Undefined.Value : value;
                             return true;
                         }
-                    }
-                    else
-                    {
-                        if (binder is SetMemberBinder setMemberBinder)
+                        
+                        if (binder is SetIndexBinder)
                         {
-                            if (TrySetProperty(reflect, setMemberBinder.Name, setMemberBinder.IgnoreCase, args, out result))
-                            {
-                                return true;
-                            }
-                        }
-                        else
-                        {
-                            if (binder is CreateInstanceBinder)
-                            {
-                                if (TryCreateInstance(reflect, args, out result))
-                                {
-                                    return true;
-                                }
-                            }
-                            else
-                            {
-                                if (binder is InvokeBinder)
-                                {
-                                    if (TryInvoke(reflect, args, out result))
-                                    {
-                                        return true;
-                                    }
-                                }
-                                else
-                                {
-                                    if (binder is InvokeMemberBinder invokeMemberBinder)
-                                    {
-                                        if (TryInvokeMethod(reflect, invokeMemberBinder.Name, invokeMemberBinder.IgnoreCase, args, out result))
-                                        {
-                                            return true;
-                                        }
-                                    }
-                                    else if ((args is not null) && (args.Length > 0))
-                                    {
-                                        if (binder is GetIndexBinder)
-                                        {
-                                            if (TryGetProperty(reflect, args[0].ToString(), false, args.Skip(1).ToArray(), out result))
-                                            {
-                                                return true;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            if (binder is SetIndexBinder)
-                                            {
-                                                if (TrySetProperty(reflect, args[0].ToString(), false, args.Skip(1).ToArray(), out result))
-                                                {
-                                                    return true;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            dispatchEx.SetProperty(args[0].ToString(), false, args.Skip(1).ToArray());
+                            result = args[args.Length - 1];
+                            return true;
                         }
                     }
                 }
@@ -182,168 +162,6 @@ namespace Microsoft.ClearScript.Util
         #endregion
 
         #region internal members
-
-        private static bool TryGetProperty(IReflect target, string name, bool ignoreCase, object[] args, out object result)
-        {
-            // ReSharper disable once SuspiciousTypeConversion.Global
-            if (target is IDispatchEx dispatchEx)
-            {
-                // Standard IExpando-over-IDispatchEx support appears to leak the variants it
-                // creates for the invocation arguments. This issue has been reported. In the
-                // meantime we'll bypass this facility and interface with IDispatchEx directly.
-
-                var value = dispatchEx.GetProperty(name, ignoreCase, args);
-                result = (value is Nonexistent) ? Undefined.Value : value;
-                return true;
-            }
-
-            var flags = BindingFlags.Public;
-            if (ignoreCase)
-            {
-                flags |= BindingFlags.IgnoreCase;
-            }
-
-            var property = target.GetProperty(name, flags);
-            if (property is not null)
-            {
-                result = property.GetValue(target, args);
-                return true;
-            }
-
-            result = null;
-            return false;
-        }
-
-        private static bool TrySetProperty(IReflect target, string name, bool ignoreCase, object[] args, out object result)
-        {
-            if ((args is not null) && (args.Length > 0))
-            {
-                // ReSharper disable once SuspiciousTypeConversion.Global
-                if (target is IDispatchEx dispatchEx)
-                {
-                    // Standard IExpando-over-IDispatchEx support appears to leak the variants it
-                    // creates for the invocation arguments. This issue has been reported. In the
-                    // meantime we'll bypass this facility and interface with IDispatchEx directly.
-
-                    dispatchEx.SetProperty(name, ignoreCase, args);
-                    result = args[args.Length - 1];
-                    return true;
-                }
-
-                var flags = BindingFlags.Public;
-                if (ignoreCase)
-                {
-                    flags |= BindingFlags.IgnoreCase;
-                }
-
-                var property = target.GetProperty(name, flags);
-                if (property is null)
-                {
-                    if (target is IExpando expando)
-                    {
-                        property = expando.AddProperty(name);
-                    }
-                }
-
-                if (property is not null)
-                {
-                    property.SetValue(target, args[args.Length - 1], args.Take(args.Length - 1).ToArray());
-                    result = args[args.Length - 1];
-                    return true;
-                }
-            }
-
-            result = null;
-            return false;
-        }
-
-        private static bool TryCreateInstance(IReflect target, object[] args, out object result)
-        {
-            // ReSharper disable once SuspiciousTypeConversion.Global
-            if (target is IDispatchEx dispatchEx)
-            {
-                // Standard IExpando-over-IDispatchEx support appears to leak the variants it
-                // creates for the invocation arguments. This issue has been reported. In the
-                // meantime we'll bypass this facility and interface with IDispatchEx directly.
-
-                result = dispatchEx.Invoke(true, args);
-                return true;
-            }
-
-            try
-            {
-                result = target.InvokeMember(SpecialMemberNames.Default, BindingFlags.CreateInstance, null, target, args, null, CultureInfo.InvariantCulture, null);
-                return true;
-            }
-            catch (TargetInvocationException)
-            {
-                throw;
-            }
-            catch
-            {
-                result = null;
-                return false;
-            }
-        }
-
-        private static bool TryInvoke(IReflect target, object[] args, out object result)
-        {
-            // ReSharper disable once SuspiciousTypeConversion.Global
-            if (target is IDispatchEx dispatchEx)
-            {
-                // Standard IExpando-over-IDispatchEx support appears to leak the variants it
-                // creates for the invocation arguments. This issue has been reported. In the
-                // meantime we'll bypass this facility and interface with IDispatchEx directly.
-
-                result = dispatchEx.Invoke(false, args);
-                return true;
-            }
-
-            try
-            {
-                result = target.InvokeMember(SpecialMemberNames.Default, BindingFlags.InvokeMethod, null, target, args, null, CultureInfo.InvariantCulture, null);
-                return true;
-            }
-            catch (TargetInvocationException)
-            {
-                throw;
-            }
-            catch
-            {
-                result = null;
-                return false;
-            }
-        }
-
-        private static bool TryInvokeMethod(IReflect target, string name, bool ignoreCase, object[] args, out object result)
-        {
-            // ReSharper disable once SuspiciousTypeConversion.Global
-            if (target is IDispatchEx dispatchEx)
-            {
-                // Standard IExpando-over-IDispatchEx support appears to leak the variants it
-                // creates for the invocation arguments. This issue has been reported. In the
-                // meantime we'll bypass this facility and interface with IDispatchEx directly.
-
-                result = dispatchEx.InvokeMethod(name, ignoreCase, args);
-                return true;
-            }
-
-            var flags = BindingFlags.Public;
-            if (ignoreCase)
-            {
-                flags |= BindingFlags.IgnoreCase;
-            }
-
-            var method = target.GetMethod(name, flags);
-            if (method is not null)
-            {
-                result = method.Invoke(target, BindingFlags.InvokeMethod | flags, null, args, CultureInfo.InvariantCulture);
-                return true;
-            }
-
-            result = null;
-            return false;
-        }
 
         private static bool TryDynamicOperation<T>(Func<T> operation, out T result)
         {

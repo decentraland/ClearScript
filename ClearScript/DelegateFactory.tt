@@ -32,7 +32,7 @@ namespace Microsoft.ClearScript
         #>
 
         [ExcludeFromCodeCoverage]
-        private class ProcShim<#= typeParamList #> : ProcShim
+        private sealed class ProcShim<#= typeParamList #> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<#= typeParamList #>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = <#= allByValueExpr #>;
@@ -103,7 +103,7 @@ namespace Microsoft.ClearScript
         #>
 
         [ExcludeFromCodeCoverage]
-        private class FuncShim<#= typeParamList #> : FuncShim<TResult>
+        private sealed class FuncShim<#= typeParamList #> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<#= typeParamList #>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = <#= allByValueExpr #>;

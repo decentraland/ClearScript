@@ -34,6 +34,7 @@ namespace Microsoft.ClearScript.Test
         [TestInitialize]
         public void TestInitialize()
         {
+            BaseTestInitialize();
             engine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging);
             engine.Execute("function pi : pi = 4 * atn(1) : end function");
             engine.Execute("function e : e = exp(1) : end function");
@@ -3152,10 +3153,10 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("VBScriptEngine")]
         public void VBScriptEngine_DisableFloatNarrowing()
         {
-            engine.AddHostType("StringT", typeof(string));
-            Assert.AreEqual(123456.80.ToString("###,###.00"), engine.Evaluate("StringT.Format(\"{0:###,###.00}\", 123456.75)"));
+            engine.Script.format = MiscHelpers.Forward(MiscHelpers.FormatInvariant);
+            Assert.AreEqual("123,456.80", engine.Evaluate("format(\"{0:###,###.00}\", 123456.75)"));
             engine.DisableFloatNarrowing = true;
-            Assert.AreEqual(123456.75.ToString("###,###.00"), engine.Evaluate("StringT.Format(\"{0:###,###.00}\", 123456.75)"));
+            Assert.AreEqual("123,456.75", engine.Evaluate("format(\"{0:###,###.00}\", 123456.75)"));
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
@@ -3186,6 +3187,96 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(false, engine.Evaluate("list.Remove(func)"));
 
             Assert.AreEqual(0, list.Count);
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_MarshalEnumAsUnderlyingType()
+        {
+            engine.AddHostObject("host", new HostFunctions());
+            engine.AddHostType(typeof(Dog));
+            engine.AddHostType(typeof(Dogs));
+
+            var dog = Dog.Mastiff;
+            var dogs = Dogs.Bulldog | Dogs.Rottweiler;
+            engine.Script.test = new EnumAsUnderlyingTypeTest { Dog = dog, Dogs = dogs };
+
+            Assert.AreEqual(Dog.Chihuahua, engine.Evaluate("Dog.Chihuahua"));
+            Assert.AreEqual(Dogs.Dalmatian | Dogs.Greyhound, engine.Evaluate("host.flags(Dogs.Dalmatian, Dogs.Greyhound)"));
+            Assert.AreEqual(dog, engine.Evaluate("test.Dog"));
+            Assert.AreEqual(dogs, engine.Evaluate("test.Dogs"));
+            Assert.AreEqual(dog.ToString(), engine.Evaluate("test.GetName(\"\", test.Dog)"));
+            Assert.AreEqual(dog.ToString(), engine.Evaluate("test.GetName(\"\", test.Dog, 0)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("test.GetName(\"\", test.Dog, \"\")"));
+            Assert.AreEqual(dogs.ToString(), engine.Evaluate("test.GetNames(\"\", test.Dogs)"));
+            Assert.AreEqual(dogs.ToString(), engine.Evaluate("test.GetNames(\"\", test.Dogs, 0)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("test.GetNames(\"\", test.Dogs, \"\")"));
+
+            engine.MarshalEnumAsUnderlyingType = true;
+            Assert.AreEqual(Dog.Chihuahua.ToUnderlyingType(), engine.Evaluate("Dog.Chihuahua"));
+            Assert.AreEqual((Dogs.Dalmatian | Dogs.Greyhound).ToUnderlyingType(), engine.Evaluate("Dogs.Dalmatian Or Dogs.Greyhound"));
+            Assert.AreEqual(dog.ToUnderlyingType(), engine.Evaluate("test.Dog"));
+            Assert.AreEqual(dogs.ToUnderlyingType(), engine.Evaluate("test.Dogs"));
+            Assert.AreEqual(dog.ToString().ToLowerInvariant(), engine.Evaluate("test.GetName(\"\", test.Dog)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("test.GetName(\"\", test.Dog, 0)"));
+            Assert.AreEqual(dog.ToString().ToLowerInvariant(), engine.Evaluate("test.GetName(\"\", test.Dog, \"\")"));
+            Assert.AreEqual(dogs.ToString().ToLowerInvariant(), engine.Evaluate("test.GetNames(\"\", test.Dogs)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("test.GetNames(\"\", test.Dogs, 0)"));
+            Assert.AreEqual(dogs.ToString().ToLowerInvariant(), engine.Evaluate("test.GetNames(\"\", test.Dogs, \"\")"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_AcceptEnumAsUnderlyingType()
+        {
+            engine.AddHostObject("host", new HostFunctions());
+            engine.AddHostType(typeof(Dog));
+            engine.AddHostType(typeof(Dogs));
+
+            engine.Script.test = new EnumAsUnderlyingTypeTest();
+            engine.UseReflectionBindFallback = true;
+
+            var dog = Dog.Mastiff;
+            var dog1 = Dogs.Bulldog;
+            var dog2 = Dogs.Rottweiler;
+            var dogs = dog1 | dog2;
+
+            engine.Execute($"test.Dog = Dog.{dog}");
+            engine.Execute($"test.Dogs = host.flags(Dogs.{dog1}, Dogs.{dog2})");
+            Assert.AreEqual(dog.ToString(), engine.Evaluate("test.GetName(\"\", test.Dog)"));
+            Assert.AreEqual(dog.ToString(), engine.Evaluate("test.GetName(\"\", test.Dog, 0)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("test.GetName(\"\", test.Dog, \"\")"));
+            Assert.AreEqual(dogs.ToString(), engine.Evaluate("test.GetNames(\"\", test.Dogs)"));
+            Assert.AreEqual(dogs.ToString(), engine.Evaluate("test.GetNames(\"\", test.Dogs, 0)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("test.GetNames(\"\", test.Dogs, \"\")"));
+
+            engine.MarshalEnumAsUnderlyingType = true;
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute($"test.Dog = Dog.{dog}"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute($"test.Dogs = Dogs.{dog1} Or Dogs.{dog2}"));
+            Assert.AreEqual(dog.ToString().ToLowerInvariant(), engine.Evaluate("test.GetName(\"\", test.Dog)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("test.GetName(\"\", test.Dog, 0)"));
+            Assert.AreEqual(dog.ToString().ToLowerInvariant(), engine.Evaluate("test.GetName(\"\", test.Dog, \"\")"));
+            Assert.AreEqual(dogs.ToString().ToLowerInvariant(), engine.Evaluate("test.GetNames(\"\", test.Dogs)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("test.GetNames(\"\", test.Dogs, 0)"));
+            Assert.AreEqual(dogs.ToString().ToLowerInvariant(), engine.Evaluate("test.GetNames(\"\", test.Dogs, \"\")"));
+
+            engine.AcceptEnumAsUnderlyingType = true;
+            engine.Execute($"test.Dog = Dog.{dog}");
+            engine.Execute($"test.Dogs = Dogs.{dog1} Or Dogs.{dog2}");
+            Assert.AreEqual(dog.ToString().ToLowerInvariant(), engine.Evaluate("test.GetName(\"\", test.Dog)"));
+            Assert.AreEqual(dog.ToString(), engine.Evaluate("test.GetName(\"\", test.Dog, 0)"));
+            Assert.AreEqual(dog.ToString().ToLowerInvariant(), engine.Evaluate("test.GetName(\"\", test.Dog, \"\")"));
+            Assert.AreEqual(dogs.ToString().ToLowerInvariant(), engine.Evaluate("test.GetNames(\"\", test.Dogs)"));
+            Assert.AreEqual(dogs.ToString(), engine.Evaluate("test.GetNames(\"\", test.Dogs, 0)"));
+            Assert.AreEqual(dogs.ToString().ToLowerInvariant(), engine.Evaluate("test.GetNames(\"\", test.Dogs, \"\")"));
+
+            engine.MarshalEnumAsUnderlyingType = false;
+            engine.Execute($"test.Dog = Dog.{dog}");
+            engine.Execute($"test.Dogs = host.flags(Dogs.{dog1}, Dogs.{dog2})");
+            Assert.AreEqual(dog.ToString(), engine.Evaluate("test.GetName(\"\", test.Dog)"));
+            Assert.AreEqual(dog.ToString(), engine.Evaluate("test.GetName(\"\", test.Dog, 0)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("test.GetName(\"\", test.Dog, \"\")"));
+            Assert.AreEqual(dogs.ToString(), engine.Evaluate("test.GetNames(\"\", test.Dogs)"));
+            Assert.AreEqual(dogs.ToString(), engine.Evaluate("test.GetNames(\"\", test.Dogs, 0)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("test.GetNames(\"\", test.Dogs, \"\")"));
         }
 
         // ReSharper restore InconsistentNaming
@@ -3374,6 +3465,63 @@ namespace Microsoft.ClearScript.Test
                 }
 
                 return base.LoadCustomAttributes<T>(resource, inherit);
+            }
+        }
+
+        public enum Dog
+        {
+            Beagle,
+            Boxer,
+            Dalmatian,
+            Greyhound,
+            Whippet,
+            Bulldog,
+            Rottweiler,
+            Doberman,
+            Mastiff,
+            Chihuahua
+        }
+
+        [Flags]
+        public enum Dogs
+        {
+            None = 0,
+            Beagle = 1 << Dog.Beagle,
+            Boxer = 1 << Dog.Boxer,
+            Dalmatian = 1 << Dog.Dalmatian,
+            Greyhound = 1 << Dog.Greyhound,
+            Whippet = 1 << Dog.Whippet,
+            Bulldog = 1 << Dog.Bulldog,
+            Rottweiler = 1 << Dog.Rottweiler,
+            Doberman = 1 << Dog.Doberman,
+            Mastiff = 1 << Dog.Mastiff,
+            Chihuahua = 1 << Dog.Chihuahua
+        }
+
+        public class EnumAsUnderlyingTypeTest
+        {
+            public Dog Dog { get; set; }
+
+            public Dogs Dogs { get; set; }
+
+            public string GetName(string foo, Dog dog = Dog.Rottweiler, double bar = 123)
+            {
+                return dog.ToString();
+            }
+
+            public string GetName(string foo, int dog = 8, string bar = "bar")
+            {
+                return Enum.ToObject(typeof(Dog), dog).ToString().ToLowerInvariant();
+            }
+
+            public string GetNames(string foo, Dogs dogs = Dogs.Dalmatian | Dogs.Doberman, double bar = 123)
+            {
+                return dogs.ToString();
+            }
+
+            public string GetNames(string foo, int dogs = 10, string bar = "bar")
+            {
+                return Enum.ToObject(typeof(Dogs), dogs).ToString().ToLowerInvariant();
             }
         }
 

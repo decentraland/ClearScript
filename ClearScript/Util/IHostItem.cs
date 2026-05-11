@@ -6,4 +6,10 @@ namespace Microsoft.ClearScript.Util
     internal interface IHostItem : IScriptMarshalWrapper
     {
     }
+
+    internal interface IDisposableHostItem : IHostItem
+    {
+        void Dispose();
+        object DisposeAsync();
+    }
 }

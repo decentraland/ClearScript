@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.ClearScript.V8;
@@ -13,8 +14,14 @@ namespace Microsoft.ClearScript.Test
     {
         public TestContext TestContext { get; set; }
 
+        public void BaseTestInitialize()
+        {
+            ((DefaultDocumentLoader)DocumentLoader.Default).HttpClientHandlerFactory = static () => new HttpClientHandler { ServerCertificateCustomValidationCallback = static (_, _, _, _) => true };
+        }
+
         public void BaseTestCleanup()
         {
+            ((DefaultDocumentLoader)DocumentLoader.Default).HttpClientHandlerFactory = null;
             DocumentLoader.Default.DiscardCachedDocuments();
 
             GC.Collect();

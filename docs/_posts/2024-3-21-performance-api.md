@@ -13,7 +13,7 @@ ClearScript 7.4.5 introduces the `Performance` object – an optional JavaScript
 
 # Setting Up
 
-To enable the `Performance` object, specify [`V8ScriptEngineFlags.AddPerformanceObject`](https://microsoft.github.io/ClearScript/Reference/html/T_Microsoft_ClearScript_V8_V8ScriptEngineFlags.htm) when constructing a [`V8ScriptEngine`](https://microsoft.github.io/ClearScript/Reference/html/T_Microsoft_ClearScript_V8_V8ScriptEngine.htm) instance:
+To enable the `Performance` object, specify [`V8ScriptEngineFlags.AddPerformanceObject`](https://clearscript.clearfoundry.net/Reference/html/T_Microsoft_ClearScript_V8_V8ScriptEngineFlags.htm) when constructing a [`V8ScriptEngine`](https://clearscript.clearfoundry.net/Reference/html/T_Microsoft_ClearScript_V8_V8ScriptEngine.htm) instance:
 
 {% highlight C# %}
 

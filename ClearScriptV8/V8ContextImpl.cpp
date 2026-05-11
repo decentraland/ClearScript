@@ -132,6 +132,13 @@ inline v8::Local<v8::External> ValueAsExternal(const v8::Local<v8::Value>& hValu
 
 //-----------------------------------------------------------------------------
 
+inline v8::Local<v8::Function> ValueAsFunction(const v8::Local<v8::Value>& hValue)
+{
+    return (!hValue.IsEmpty() && hValue->IsFunction()) ? hValue.As<v8::Function>() : v8::Local<v8::Function>();
+}
+
+//-----------------------------------------------------------------------------
+
 inline v8::Local<v8::BigInt> ValueAsBigInt(const v8::Local<v8::Value>& hValue)
 {
     if (hValue.IsEmpty())
@@ -209,13 +216,13 @@ inline bool TryGetValueAsNumber(v8::Local<v8::Context> hContext, const v8::Local
 template <typename TInfo>
 inline V8ContextImpl* GetContextImplFromHolder(const TInfo& info)
 {
-    auto hHolder = info.HolderV2();
+    auto hHolder = info.Holder();
     if (!hHolder.IsEmpty() && hHolder->InternalFieldCount() > 0)
     {
         auto hField = hHolder->GetInternalField(0);
         if (!hField.IsEmpty() && hField->IsValue() && !hField.template As<v8::Value>()->IsUndefined())
         {
-            return static_cast<V8ContextImpl*>(hHolder->GetAlignedPointerFromInternalField(0));
+            return static_cast<V8ContextImpl*>(hHolder->GetAlignedPointerFromInternalField(0, v8::kEmbedderDataTypeTagDefault));
         }
     }
 
@@ -228,7 +235,7 @@ template <typename TInfo>
 inline V8ContextImpl* GetContextImplFromData(const TInfo& info)
 {
     auto hContextImpl = ::ValueAsExternal(info.Data());
-    return !hContextImpl.IsEmpty() ? static_cast<V8ContextImpl*>(hContextImpl->Value()) : nullptr;
+    return !hContextImpl.IsEmpty() ? static_cast<V8ContextImpl*>(hContextImpl->Value(v8::kExternalPointerTypeTagDefault)) : nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -414,7 +421,7 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
                 auto hGlobal = m_hContext->Global();
                 if (!hGlobal.IsEmpty() && (hGlobal->InternalFieldCount() > 0))
                 {
-                    hGlobal->SetAlignedPointerInInternalField(0, this);
+                    hGlobal->SetAlignedPointerInInternalField(0, this, 0);
                 }
             }
         }
@@ -425,17 +432,24 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
         }
 
         auto hContextImpl = CreateExternal(this);
+        auto globalFlags = V8IsolateImpl::GetGlobalFlags();
 
         v8::Local<v8::FunctionTemplate> hGetHostObjectIteratorFunction;
         v8::Local<v8::FunctionTemplate> hGetHostObjectAsyncIteratorFunction;
+        v8::Local<v8::FunctionTemplate> hDisposeHostObjectFunction;
+        v8::Local<v8::FunctionTemplate> hAsyncDisposeHostObjectFunction;
+
         v8::Local<v8::FunctionTemplate> hGetFastHostObjectIteratorFunction;
         v8::Local<v8::FunctionTemplate> hGetFastHostObjectAsyncIteratorFunction;
+        v8::Local<v8::FunctionTemplate> hDisposeFastHostObjectFunction;
+        v8::Local<v8::FunctionTemplate> hAsyncDisposeFastHostObjectFunction;
+
         v8::Local<v8::FunctionTemplate> hGetHostObjectJsonFunction;
         v8::Local<v8::FunctionTemplate> hHostDelegateToFunctionFunction;
 
         BEGIN_CONTEXT_SCOPE
 
-            m_hContext->SetAlignedPointerInEmbedderData(1, this);
+            m_hContext->SetAlignedPointerInEmbedderData(1, this, 1);
 
             m_hIsHostObjectKey = CreatePersistent(CreateSymbol());
             ASSERT_EVAL(FROM_MAYBE(m_hContext->Global()->Set(m_hContext, CreateString("isHostObjectKey"), m_hIsHostObjectKey)));
@@ -461,8 +475,20 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
 
             hGetHostObjectIteratorFunction = CreateFunctionTemplate(GetHostObjectIterator, hContextImpl);
             hGetHostObjectAsyncIteratorFunction = CreateFunctionTemplate(GetHostObjectAsyncIterator, hContextImpl);
+            if (!::HasFlag(globalFlags, V8GlobalFlags::DisableExplicitResourceManagement))
+            {
+                hDisposeHostObjectFunction = CreateFunctionTemplate(DisposeHostObject, hContextImpl);
+                hAsyncDisposeHostObjectFunction = CreateFunctionTemplate(AsyncDisposeHostObject, hContextImpl);
+            }
+
             hGetFastHostObjectIteratorFunction = CreateFunctionTemplate(GetFastHostObjectIterator, hContextImpl);
             hGetFastHostObjectAsyncIteratorFunction = CreateFunctionTemplate(GetFastHostObjectAsyncIterator, hContextImpl);
+            if (!::HasFlag(globalFlags, V8GlobalFlags::DisableExplicitResourceManagement))
+            {
+                hDisposeFastHostObjectFunction = CreateFunctionTemplate(DisposeFastHostObject, hContextImpl);
+                hAsyncDisposeFastHostObjectFunction = CreateFunctionTemplate(AsyncDisposeFastHostObject, hContextImpl);
+            }
+
             hGetHostObjectJsonFunction = CreateFunctionTemplate(GetHostObjectJson, hContextImpl);
             hHostDelegateToFunctionFunction = CreateFunctionTemplate(CreateFunctionForHostDelegate, hContextImpl);
 
@@ -491,6 +517,11 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
         m_hHostObjectTemplate->PrototypeTemplate()->Set(GetIteratorSymbol(), hGetHostObjectIteratorFunction);
         m_hHostObjectTemplate->PrototypeTemplate()->Set(GetAsyncIteratorSymbol(), hGetHostObjectAsyncIteratorFunction);
         m_hHostObjectTemplate->PrototypeTemplate()->Set(hToJSON, hGetHostObjectJsonFunction, ::CombineFlags(v8::ReadOnly, v8::DontDelete, v8::DontEnum));
+        if (!::HasFlag(globalFlags, V8GlobalFlags::DisableExplicitResourceManagement))
+        {
+            m_hHostObjectTemplate->PrototypeTemplate()->Set(GetDisposeSymbol(), hDisposeHostObjectFunction);
+            m_hHostObjectTemplate->PrototypeTemplate()->Set(GetAsyncDisposeSymbol(), hAsyncDisposeHostObjectFunction);
+        }
 
         m_hHostInvocableTemplate = CreatePersistent(CreateFunctionTemplate());
         m_hHostInvocableTemplate->SetClassName(CreateString("HostInvocable"));
@@ -501,6 +532,11 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
         m_hHostInvocableTemplate->PrototypeTemplate()->Set(GetAsyncIteratorSymbol(), hGetHostObjectAsyncIteratorFunction);
         m_hHostInvocableTemplate->PrototypeTemplate()->Set(hToJSON, hGetHostObjectJsonFunction, ::CombineFlags(v8::ReadOnly, v8::DontDelete, v8::DontEnum));
         m_hHostInvocableTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, hContextImpl);
+        if (!::HasFlag(globalFlags, V8GlobalFlags::DisableExplicitResourceManagement))
+        {
+            m_hHostInvocableTemplate->PrototypeTemplate()->Set(GetDisposeSymbol(), hDisposeHostObjectFunction);
+            m_hHostInvocableTemplate->PrototypeTemplate()->Set(GetAsyncDisposeSymbol(), hAsyncDisposeHostObjectFunction);
+        }
 
         m_hHostDelegateTemplate = CreatePersistent(CreateFunctionTemplate());
         m_hHostDelegateTemplate->SetClassName(CreateString("HostDelegate"));
@@ -513,6 +549,11 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
         m_hHostDelegateTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, hContextImpl);
         m_hHostDelegateTemplate->InstanceTemplate()->SetHostDelegate(); // instructs our patched V8 typeof implementation to return "function" 
         m_hHostDelegateTemplate->PrototypeTemplate()->Set(CreateString("toFunction"), hHostDelegateToFunctionFunction);
+        if (!::HasFlag(globalFlags, V8GlobalFlags::DisableExplicitResourceManagement))
+        {
+            m_hHostDelegateTemplate->PrototypeTemplate()->Set(GetDisposeSymbol(), hDisposeHostObjectFunction);
+            m_hHostDelegateTemplate->PrototypeTemplate()->Set(GetAsyncDisposeSymbol(), hAsyncDisposeHostObjectFunction);
+        }
 
         m_hFastHostObjectTemplate = CreatePersistent(CreateFunctionTemplate());
         m_hFastHostObjectTemplate->SetClassName(CreateString("FastHostObject"));
@@ -521,6 +562,11 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
         m_hFastHostObjectTemplate->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetFastHostObjectProperty, SetFastHostObjectProperty, QueryFastHostObjectProperty, DeleteFastHostObjectProperty, GetFastHostObjectPropertyIndices, hContextImpl));
         m_hFastHostObjectTemplate->PrototypeTemplate()->Set(GetIteratorSymbol(), hGetFastHostObjectIteratorFunction);
         m_hFastHostObjectTemplate->PrototypeTemplate()->Set(GetAsyncIteratorSymbol(), hGetFastHostObjectAsyncIteratorFunction);
+        if (!::HasFlag(globalFlags, V8GlobalFlags::DisableExplicitResourceManagement))
+        {
+            m_hFastHostObjectTemplate->PrototypeTemplate()->Set(GetDisposeSymbol(), hDisposeFastHostObjectFunction);
+            m_hFastHostObjectTemplate->PrototypeTemplate()->Set(GetAsyncDisposeSymbol(), hAsyncDisposeFastHostObjectFunction);
+        }
 
         m_hFastHostFunctionTemplate = CreatePersistent(CreateFunctionTemplate());
         m_hFastHostFunctionTemplate->SetClassName(CreateString("FastHostFunction"));
@@ -532,6 +578,11 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
         m_hFastHostFunctionTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeFastHostObject, hContextImpl);
         m_hFastHostFunctionTemplate->InstanceTemplate()->SetHostDelegate(); // instructs our patched V8 typeof implementation to return "function" 
         m_hFastHostFunctionTemplate->PrototypeTemplate()->Set(CreateString("toFunction"), hHostDelegateToFunctionFunction);
+        if (!::HasFlag(globalFlags, V8GlobalFlags::DisableExplicitResourceManagement))
+        {
+            m_hFastHostFunctionTemplate->PrototypeTemplate()->Set(GetDisposeSymbol(), hDisposeFastHostObjectFunction);
+            m_hFastHostFunctionTemplate->PrototypeTemplate()->Set(GetAsyncDisposeSymbol(), hAsyncDisposeFastHostObjectFunction);
+        }
 
         m_pvV8ObjectCache = HostObjectUtil::CreateV8ObjectCache();
         m_spIsolateImpl->AddContext(this, options);
@@ -735,8 +786,7 @@ V8Value V8ContextImpl::Execute(const V8DocumentInfo& documentInfo, const StdStri
                         {
                             if (m_hGetModuleResultFunction.IsEmpty())
                             {
-                                auto hEngineInternal = FROM_MAYBE(m_hContext->Global()->Get(m_hContext, CreateString("EngineInternal"))).As<v8::Object>();
-                                m_hGetModuleResultFunction = CreatePersistent(FROM_MAYBE(hEngineInternal->Get(m_hContext, CreateString("getModuleResult"))).As<v8::Function>());
+                                m_hGetModuleResultFunction = CreatePersistent(FROM_MAYBE(GetEngineInternal()->Get(m_hContext, CreateString("getModuleResult"))).As<v8::Function>());
                             }
 
                             v8::Local<v8::Value> args[] = { hResult, hMetaHolder };
@@ -1279,8 +1329,7 @@ V8Value V8ContextImpl::Execute(const SharedPtr<V8ScriptHolder>& spHolder, bool e
                         {
                             if (m_hGetModuleResultFunction.IsEmpty())
                             {
-                                auto hEngineInternal = FROM_MAYBE(m_hContext->Global()->Get(m_hContext, CreateString("EngineInternal"))).As<v8::Object>();
-                                m_hGetModuleResultFunction = CreatePersistent(FROM_MAYBE(hEngineInternal->Get(m_hContext, CreateString("getModuleResult"))).As<v8::Function>());
+                                m_hGetModuleResultFunction = CreatePersistent(FROM_MAYBE(GetEngineInternal()->Get(m_hContext, CreateString("getModuleResult"))).As<v8::Function>());
                             }
 
                             v8::Local<v8::Value> args[] = { hResult, hMetaHolder };
@@ -1846,6 +1895,22 @@ void V8ContextImpl::InvokeWithV8ObjectArrayBufferOrViewData(void* pvObject, V8Ob
 
 //-----------------------------------------------------------------------------
 
+V8Value::Flags V8ContextImpl::GetV8ObjectFlags(void* pvObject)
+{
+    BEGIN_CONTEXT_SCOPE
+
+        auto value = ExportValue(::HandleFromPtr<v8::Object>(pvObject));
+
+        V8ObjectHolder* pHolder;
+        V8Value::Subtype subtype;
+        V8Value::Flags flags;
+        return value.AsV8Object(pHolder, subtype, flags) ? flags : V8Value::Flags::None;
+
+    END_CONTEXT_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
 void V8ContextImpl::InitializeImportMeta(v8::Local<v8::Context> hContext, v8::Local<v8::Module> hModule, v8::Local<v8::Object> hMeta)
 {
     BEGIN_CONTEXT_SCOPE
@@ -2103,7 +2168,7 @@ v8::MaybeLocal<v8::Value> V8ContextImpl::PopulateSyntheticModule(v8::Local<v8::C
 {
     if (hContext->GetNumberOfEmbedderDataFields() > 1)
     {
-        auto pContextImpl = static_cast<V8ContextImpl*>(hContext->GetAlignedPointerFromEmbedderData(1));
+        auto pContextImpl = static_cast<V8ContextImpl*>(hContext->GetAlignedPointerFromEmbedderData(1, v8::kEmbedderDataTypeTagDefault));
         if (pContextImpl != nullptr)
         {
             return pContextImpl->PopulateSyntheticModule(hModule);
@@ -2215,6 +2280,7 @@ void V8ContextImpl::Teardown()
     Dispose(m_hObjectNotInvocable);
     Dispose(m_hStackKey);
     Dispose(m_hInternalUseOnly);
+    Dispose(m_hEngineInternal);
     Dispose(m_hAccessToken);
     Dispose(m_hAccessTokenKey);
     Dispose(m_hCacheKey);
@@ -2231,12 +2297,12 @@ void V8ContextImpl::Teardown()
         auto hGlobal = m_hContext->Global();
         if (!hGlobal.IsEmpty() && (hGlobal->InternalFieldCount() > 0))
         {
-            hGlobal->SetAlignedPointerInInternalField(0, nullptr);
+            hGlobal->SetAlignedPointerInInternalField(0, nullptr, 0);
         }
 
         if (m_hContext->GetNumberOfEmbedderDataFields() > 1)
         {
-            m_hContext->SetAlignedPointerInEmbedderData(1, nullptr);
+            m_hContext->SetAlignedPointerInEmbedderData(1, nullptr, 1);
         }
 
         Dispose(m_hContext);
@@ -2272,6 +2338,24 @@ SharedPtr<V8WeakContextBinding> V8ContextImpl::GetWeakBinding()
 
 //-----------------------------------------------------------------------------
 
+v8::Local<v8::Object> V8ContextImpl::GetEngineInternal()
+{
+    FROM_MAYBE_TRY
+
+        if (m_hEngineInternal.IsEmpty())
+        {
+            m_hEngineInternal = CreatePersistent(FROM_MAYBE(m_hContext->Global()->Get(m_hContext, CreateString("EngineInternal"))).As<v8::Object>());
+        }
+
+        return m_hEngineInternal;
+
+    FROM_MAYBE_CATCH_CONSUME
+
+    return v8::Local<v8::Object>();
+}
+
+//-----------------------------------------------------------------------------
+
 HostObjectHolder* V8ContextImpl::GetHostObjectHolder(v8::Local<v8::Object> hObject)
 {
     if (!hObject.IsEmpty())
@@ -2279,7 +2363,7 @@ HostObjectHolder* V8ContextImpl::GetHostObjectHolder(v8::Local<v8::Object> hObje
         auto hHolder = ::ValueAsExternal(FROM_MAYBE_DEFAULT(hObject->GetPrivate(m_hContext, GetHostObjectHolderKey())));
         if (!hHolder.IsEmpty())
         {
-            return static_cast<HostObjectHolder*>(hHolder->Value());
+            return static_cast<HostObjectHolder*>(hHolder->Value(v8::kExternalPointerTypeTagDefault));
         }
     }
 
@@ -2829,8 +2913,7 @@ void V8ContextImpl::GetHostObjectIterator(const v8::FunctionCallbackInfo<v8::Val
                 {
                     if (pContextImpl->m_hToIteratorFunction.IsEmpty())
                     {
-                        auto hEngineInternal = FROM_MAYBE(pContextImpl->m_hContext->Global()->Get(pContextImpl->m_hContext, pContextImpl->CreateString("EngineInternal"))).As<v8::Object>();
-                        pContextImpl->m_hToIteratorFunction = pContextImpl->CreatePersistent(FROM_MAYBE(hEngineInternal->Get(pContextImpl->m_hContext, pContextImpl->CreateString("toIterator"))).As<v8::Function>());
+                        pContextImpl->m_hToIteratorFunction = pContextImpl->CreatePersistent(FROM_MAYBE(pContextImpl->GetEngineInternal()->Get(pContextImpl->m_hContext, pContextImpl->CreateString("toIterator"))).As<v8::Function>());
                     }
 
                     v8::Local<v8::Value> args[] = { pContextImpl->ImportValue(HostObjectUtil::GetEnumerator(pvObject)) };
@@ -2862,12 +2945,64 @@ void V8ContextImpl::GetHostObjectAsyncIterator(const v8::FunctionCallbackInfo<v8
                 {
                     if (pContextImpl->m_hToAsyncIteratorFunction.IsEmpty())
                     {
-                        auto hEngineInternal = FROM_MAYBE(pContextImpl->m_hContext->Global()->Get(pContextImpl->m_hContext, pContextImpl->CreateString("EngineInternal"))).As<v8::Object>();
-                        pContextImpl->m_hToAsyncIteratorFunction = pContextImpl->CreatePersistent(FROM_MAYBE(hEngineInternal->Get(pContextImpl->m_hContext, pContextImpl->CreateString("toAsyncIterator"))).As<v8::Function>());
+                        pContextImpl->m_hToAsyncIteratorFunction = pContextImpl->CreatePersistent(FROM_MAYBE(pContextImpl->GetEngineInternal()->Get(pContextImpl->m_hContext, pContextImpl->CreateString("toAsyncIterator"))).As<v8::Function>());
                     }
 
                     v8::Local<v8::Value> args[] = { pContextImpl->ImportValue(HostObjectUtil::GetAsyncEnumerator(pvObject)) };
                     CALLBACK_RETURN(FROM_MAYBE(pContextImpl->m_hToAsyncIteratorFunction->Call(pContextImpl->m_hContext, pContextImpl->GetUndefined(), 1, args)));
+                }
+                catch (const HostException& exception)
+                {
+                    pContextImpl->ThrowScriptException(exception);
+                }
+            }
+        }
+
+    FROM_MAYBE_CATCH_CONSUME
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::DisposeHostObject(const v8::FunctionCallbackInfo<v8::Value>& info)
+{
+    FROM_MAYBE_TRY
+
+        auto pContextImpl = ::GetContextImplFromData(info);
+        if (pContextImpl != nullptr)
+        {
+            auto pvObject = pContextImpl->GetHostObject(info.This());
+            if (pvObject != nullptr)
+            {
+                try
+                {
+                    HostObjectUtil::Dispose(pvObject);
+                    CALLBACK_RETURN(pContextImpl->GetUndefined());
+                }
+                catch (const HostException& exception)
+                {
+                    pContextImpl->ThrowScriptException(exception);
+                }
+            }
+        }
+
+    FROM_MAYBE_CATCH_CONSUME
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::AsyncDisposeHostObject(const v8::FunctionCallbackInfo<v8::Value>& info)
+{
+    FROM_MAYBE_TRY
+
+        auto pContextImpl = ::GetContextImplFromData(info);
+        if (pContextImpl != nullptr)
+        {
+            auto pvObject = pContextImpl->GetHostObject(info.This());
+            if (pvObject != nullptr)
+            {
+                try
+                {
+                    CALLBACK_RETURN(pContextImpl->ImportValue(HostObjectUtil::AsyncDispose(pvObject)));
                 }
                 catch (const HostException& exception)
                 {
@@ -2895,8 +3030,7 @@ void V8ContextImpl::GetFastHostObjectIterator(const v8::FunctionCallbackInfo<v8:
                 {
                     if (pContextImpl->m_hToIteratorFunction.IsEmpty())
                     {
-                        auto hEngineInternal = FROM_MAYBE(pContextImpl->m_hContext->Global()->Get(pContextImpl->m_hContext, pContextImpl->CreateString("EngineInternal"))).As<v8::Object>();
-                        pContextImpl->m_hToIteratorFunction = pContextImpl->CreatePersistent(FROM_MAYBE(hEngineInternal->Get(pContextImpl->m_hContext, pContextImpl->CreateString("toIterator"))).As<v8::Function>());
+                        pContextImpl->m_hToIteratorFunction = pContextImpl->CreatePersistent(FROM_MAYBE(pContextImpl->GetEngineInternal()->Get(pContextImpl->m_hContext, pContextImpl->CreateString("toIterator"))).As<v8::Function>());
                     }
 
                     v8::Local<v8::Value> args[] = { pContextImpl->ImportValue(FastHostObjectUtil::GetEnumerator(pvObject)) };
@@ -2928,12 +3062,64 @@ void V8ContextImpl::GetFastHostObjectAsyncIterator(const v8::FunctionCallbackInf
                 {
                     if (pContextImpl->m_hToAsyncIteratorFunction.IsEmpty())
                     {
-                        auto hEngineInternal = FROM_MAYBE(pContextImpl->m_hContext->Global()->Get(pContextImpl->m_hContext, pContextImpl->CreateString("EngineInternal"))).As<v8::Object>();
-                        pContextImpl->m_hToAsyncIteratorFunction = pContextImpl->CreatePersistent(FROM_MAYBE(hEngineInternal->Get(pContextImpl->m_hContext, pContextImpl->CreateString("toAsyncIterator"))).As<v8::Function>());
+                        pContextImpl->m_hToAsyncIteratorFunction = pContextImpl->CreatePersistent(FROM_MAYBE(pContextImpl->GetEngineInternal()->Get(pContextImpl->m_hContext, pContextImpl->CreateString("toAsyncIterator"))).As<v8::Function>());
                     }
 
                     v8::Local<v8::Value> args[] = { pContextImpl->ImportValue(FastHostObjectUtil::GetAsyncEnumerator(pvObject)) };
                     CALLBACK_RETURN(FROM_MAYBE(pContextImpl->m_hToAsyncIteratorFunction->Call(pContextImpl->m_hContext, pContextImpl->GetUndefined(), 1, args)));
+                }
+                catch (const HostException& exception)
+                {
+                    pContextImpl->ThrowScriptException(exception);
+                }
+            }
+        }
+
+    FROM_MAYBE_CATCH_CONSUME
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::DisposeFastHostObject(const v8::FunctionCallbackInfo<v8::Value>& info)
+{
+    FROM_MAYBE_TRY
+
+        auto pContextImpl = ::GetContextImplFromData(info);
+        if (pContextImpl != nullptr)
+        {
+            auto pvObject = pContextImpl->GetHostObject(info.This());
+            if (pvObject != nullptr)
+            {
+                try
+                {
+                    FastHostObjectUtil::Dispose(pvObject);
+                    CALLBACK_RETURN(pContextImpl->GetUndefined());
+                }
+                catch (const HostException& exception)
+                {
+                    pContextImpl->ThrowScriptException(exception);
+                }
+            }
+        }
+
+    FROM_MAYBE_CATCH_CONSUME
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::AsyncDisposeFastHostObject(const v8::FunctionCallbackInfo<v8::Value>& info)
+{
+    FROM_MAYBE_TRY
+
+        auto pContextImpl = ::GetContextImplFromData(info);
+        if (pContextImpl != nullptr)
+        {
+            auto pvObject = pContextImpl->GetHostObject(info.This());
+            if (pvObject != nullptr)
+            {
+                try
+                {
+                    CALLBACK_RETURN(pContextImpl->ImportValue(FastHostObjectUtil::AsyncDispose(pvObject)));
                 }
                 catch (const HostException& exception)
                 {
@@ -2961,8 +3147,7 @@ void V8ContextImpl::GetHostObjectJson(const v8::FunctionCallbackInfo<v8::Value>&
                 {
                     if (pContextImpl->m_hToJsonFunction.IsEmpty())
                     {
-                        auto hEngineInternal = FROM_MAYBE(pContextImpl->m_hContext->Global()->Get(pContextImpl->m_hContext, pContextImpl->CreateString("EngineInternal"))).As<v8::Object>();
-                        pContextImpl->m_hToJsonFunction = pContextImpl->CreatePersistent(FROM_MAYBE(hEngineInternal->Get(pContextImpl->m_hContext, pContextImpl->CreateString("toJson"))).As<v8::Function>());
+                        pContextImpl->m_hToJsonFunction = pContextImpl->CreatePersistent(FROM_MAYBE(pContextImpl->GetEngineInternal()->Get(pContextImpl->m_hContext, pContextImpl->CreateString("toJson"))).As<v8::Function>());
                     }
 
                     v8::Local<v8::Value> args[] = { info[0], hObject };
@@ -3059,7 +3244,7 @@ v8::Intercepted V8ContextImpl::GetHostObjectProperty(v8::Local<v8::Name> hKey, c
         auto pContextImpl = ::GetContextImplFromData(info);
         if (CheckContextImplForHostObjectCallback(pContextImpl))
         {
-            auto hHolder = info.HolderV2();
+            auto hHolder = info.Holder();
             auto pvObject = pContextImpl->GetHostObject(hHolder);
 
             auto hName = ::ValueAsString(hKey);
@@ -3133,7 +3318,7 @@ v8::Intercepted V8ContextImpl::SetHostObjectProperty(v8::Local<v8::Name> hKey, v
     auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        auto pvObject = pContextImpl->GetHostObject(info.HolderV2());
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
         if (pvObject != nullptr)
         {
             try
@@ -3166,7 +3351,7 @@ v8::Intercepted V8ContextImpl::QueryHostObjectProperty(v8::Local<v8::Name> hKey,
     auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        auto pvObject = pContextImpl->GetHostObject(info.HolderV2());
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
         if (pvObject != nullptr)
         {
             try
@@ -3208,7 +3393,7 @@ v8::Intercepted V8ContextImpl::DeleteHostObjectProperty(v8::Local<v8::Name> hKey
     auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        auto pvObject = pContextImpl->GetHostObject(info.HolderV2());
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
         if (pvObject != nullptr)
         {
             try
@@ -3234,7 +3419,7 @@ void V8ContextImpl::GetHostObjectPropertyNames(const v8::PropertyCallbackInfo<v8
         auto pContextImpl = ::GetContextImplFromData(info);
         if (CheckContextImplForHostObjectCallback(pContextImpl))
         {
-            auto pvObject = pContextImpl->GetHostObject(info.HolderV2());
+            auto pvObject = pContextImpl->GetHostObject(info.Holder());
             if (pvObject != nullptr)
             {
                 try
@@ -3270,7 +3455,7 @@ v8::Intercepted V8ContextImpl::GetHostObjectProperty(uint32_t index, const v8::P
     auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        auto pvObject = pContextImpl->GetHostObject(info.HolderV2());
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
         if (pvObject != nullptr)
         {
             try
@@ -3296,7 +3481,7 @@ v8::Intercepted V8ContextImpl::SetHostObjectProperty(uint32_t index, v8::Local<v
     auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        auto pvObject = pContextImpl->GetHostObject(info.HolderV2());
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
         if (pvObject != nullptr)
         {
             try
@@ -3323,7 +3508,7 @@ v8::Intercepted V8ContextImpl::QueryHostObjectProperty(uint32_t index, const v8:
     auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        auto pvObject = pContextImpl->GetHostObject(info.HolderV2());
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
         if (pvObject != nullptr)
         {
             try
@@ -3358,7 +3543,7 @@ v8::Intercepted V8ContextImpl::DeleteHostObjectProperty(uint32_t index, const v8
     auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        auto pvObject = pContextImpl->GetHostObject(info.HolderV2());
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
         if (pvObject != nullptr)
         {
             try
@@ -3384,7 +3569,7 @@ void V8ContextImpl::GetHostObjectPropertyIndices(const v8::PropertyCallbackInfo<
         auto pContextImpl = ::GetContextImplFromData(info);
         if (CheckContextImplForHostObjectCallback(pContextImpl))
         {
-            auto pvObject = pContextImpl->GetHostObject(info.HolderV2());
+            auto pvObject = pContextImpl->GetHostObject(info.Holder());
             if (pvObject != nullptr)
             {
                 try
@@ -3422,7 +3607,7 @@ v8::Intercepted V8ContextImpl::GetFastHostObjectProperty(v8::Local<v8::Name> hKe
         auto pContextImpl = ::GetContextImplFromData(info);
         if (CheckContextImplForHostObjectCallback(pContextImpl))
         {
-            auto hHolder = info.HolderV2();
+            auto hHolder = info.Holder();
             auto pvObject = pContextImpl->GetHostObject(hHolder);
 
             auto hName = ::ValueAsString(hKey);
@@ -3487,7 +3672,7 @@ v8::Intercepted V8ContextImpl::SetFastHostObjectProperty(v8::Local<v8::Name> hKe
     auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        auto pvObject = pContextImpl->GetHostObject(info.HolderV2());
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
         if (pvObject != nullptr)
         {
             try
@@ -3520,7 +3705,7 @@ v8::Intercepted V8ContextImpl::QueryFastHostObjectProperty(v8::Local<v8::Name> h
     auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        auto pvObject = pContextImpl->GetHostObject(info.HolderV2());
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
         if (pvObject != nullptr)
         {
             try
@@ -3573,7 +3758,7 @@ v8::Intercepted V8ContextImpl::DeleteFastHostObjectProperty(v8::Local<v8::Name> 
     auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        auto pvObject = pContextImpl->GetHostObject(info.HolderV2());
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
         if (pvObject != nullptr)
         {
             try
@@ -3599,7 +3784,7 @@ void V8ContextImpl::GetFastHostObjectPropertyNames(const v8::PropertyCallbackInf
         auto pContextImpl = ::GetContextImplFromData(info);
         if (CheckContextImplForHostObjectCallback(pContextImpl))
         {
-            auto pvObject = pContextImpl->GetHostObject(info.HolderV2());
+            auto pvObject = pContextImpl->GetHostObject(info.Holder());
             if (pvObject != nullptr)
             {
                 try
@@ -3635,7 +3820,7 @@ v8::Intercepted V8ContextImpl::GetFastHostObjectProperty(uint32_t index, const v
     auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        auto pvObject = pContextImpl->GetHostObject(info.HolderV2());
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
         if (pvObject != nullptr)
         {
             try
@@ -3661,7 +3846,7 @@ v8::Intercepted V8ContextImpl::SetFastHostObjectProperty(uint32_t index, v8::Loc
     auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        auto pvObject = pContextImpl->GetHostObject(info.HolderV2());
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
         if (pvObject != nullptr)
         {
             try
@@ -3688,7 +3873,7 @@ v8::Intercepted V8ContextImpl::QueryFastHostObjectProperty(uint32_t index, const
     auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        auto pvObject = pContextImpl->GetHostObject(info.HolderV2());
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
         if (pvObject != nullptr)
         {
             try
@@ -3735,7 +3920,7 @@ v8::Intercepted V8ContextImpl::DeleteFastHostObjectProperty(uint32_t index, cons
     auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        auto pvObject = pContextImpl->GetHostObject(info.HolderV2());
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
         if (pvObject != nullptr)
         {
             try
@@ -3761,7 +3946,7 @@ void V8ContextImpl::GetFastHostObjectPropertyIndices(const v8::PropertyCallbackI
         auto pContextImpl = ::GetContextImplFromData(info);
         if (CheckContextImplForHostObjectCallback(pContextImpl))
         {
-            auto pvObject = pContextImpl->GetHostObject(info.HolderV2());
+            auto pvObject = pContextImpl->GetHostObject(info.Holder());
             if (pvObject != nullptr)
             {
                 try
@@ -4514,6 +4699,33 @@ V8Value V8ContextImpl::ExportValue(v8::Local<v8::Value> hValue)
             auto flags = V8Value::Flags::None;
             SharedPtr<V8SharedObjectInfo> spSharedObjectInfo;
 
+            auto hGetIteratorFunction = ::ValueAsFunction(FROM_MAYBE(hObject->Get(m_hContext, GetIteratorSymbol())));
+            if (!hGetIteratorFunction.IsEmpty())
+            {
+                flags = ::CombineFlags(flags, V8Value::Flags::Iterable);
+            }
+
+            auto hGetAsyncIteratorFunction = ::ValueAsFunction(FROM_MAYBE(hObject->Get(m_hContext, GetAsyncIteratorSymbol())));
+            if (!hGetAsyncIteratorFunction.IsEmpty())
+            {
+                flags = ::CombineFlags(flags, V8Value::Flags::AsyncIterable);
+            }
+
+            if (!::HasFlag(V8IsolateImpl::GetGlobalFlags(), V8GlobalFlags::DisableExplicitResourceManagement))
+            {
+                auto hDisposeFunction = ::ValueAsFunction(FROM_MAYBE(hObject->Get(m_hContext, GetDisposeSymbol())));
+                if (!hDisposeFunction.IsEmpty())
+                {
+                    flags = ::CombineFlags(flags, V8Value::Flags::Disposable);
+                }
+
+                auto hAsyncDisposeFunction = ::ValueAsFunction(FROM_MAYBE(hObject->Get(m_hContext, GetAsyncDisposeSymbol())));
+                if (!hAsyncDisposeFunction.IsEmpty())
+                {
+                    flags = ::CombineFlags(flags, V8Value::Flags::AsyncDisposable);
+                }
+            }
+
             if (hObject->IsFunction())
             {
                 subtype = V8Value::Subtype::Function;
@@ -4534,8 +4746,7 @@ V8Value V8ContextImpl::ExportValue(v8::Local<v8::Value> hValue)
 
                 if (m_hAsyncGeneratorConstructor.IsEmpty())
                 {
-                    auto hEngineInternal = FROM_MAYBE(m_hContext->Global()->Get(m_hContext, CreateString("EngineInternal"))).As<v8::Object>();
-                    m_hAsyncGeneratorConstructor = CreatePersistent(FROM_MAYBE(hEngineInternal->Get(m_hContext, CreateString("asyncGenerator"))));
+                    m_hAsyncGeneratorConstructor = CreatePersistent(FROM_MAYBE(GetEngineInternal()->Get(m_hContext, CreateString("asyncGenerator"))));
                 }
 
                 if (FROM_MAYBE(hObject->Get(m_hContext, m_hConstructorKey))->StrictEquals(m_hAsyncGeneratorConstructor))

@@ -190,6 +190,14 @@ Object.defineProperty(this, 'EngineInternal', { value: (globalObject => {
         getModuleResult: bind(async (result, metaHolder) => {
             await result;
             return metaHolder[0]?.[moduleResultKey];
+        }),
+
+        dispose: bind(obj => {
+            using x = obj;
+        }),
+
+        disposeAsync: bind(async obj => {
+            await using x = obj;
         })
 
     });

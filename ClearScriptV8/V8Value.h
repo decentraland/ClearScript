@@ -142,13 +142,19 @@ public:
         Async = 0x0002,
         Generator = 0x0004,
         Pending = 0x0008,
-        Rejected = 0x0010
+        Rejected = 0x0010,
+        Iterable = 0x0020,
+        AsyncIterable = 0x0040,
+        Disposable = 0x0080,
+        AsyncDisposable = 0x0100
     };
 
     struct WireData;
     struct Decoded;
     struct FastArg;
     struct FastResult;
+    struct FastScriptArg;
+    struct FastScriptResult;
 
     explicit V8Value(NonexistentInitializer):
         m_Type(Type::Nonexistent)

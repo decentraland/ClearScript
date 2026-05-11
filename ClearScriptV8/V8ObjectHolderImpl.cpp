@@ -149,6 +149,13 @@ void V8ObjectHolderImpl::InvokeWithArrayBufferOrViewData(V8ObjectHelpers::ArrayB
 
 //-----------------------------------------------------------------------------
 
+V8Value::Flags V8ObjectHolderImpl::GetFlags() const
+{
+    return m_spBinding->GetContextImpl()->GetV8ObjectFlags(m_pvObject);
+}
+
+//-----------------------------------------------------------------------------
+
 V8ObjectHolderImpl::~V8ObjectHolderImpl()
 {
     SharedPtr<V8IsolateImpl> spIsolateImpl;

@@ -1086,6 +1086,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Object_InvokeWithArrayBufferOrViewDataWithArg(hObject, pAction, pArg);
             }
 
+            V8Value.Flags IV8SplitProxyNative.V8Object_GetFlags(V8Object.Handle hObject)
+            {
+                return V8Object_GetFlags(hObject);
+            }
+
             #endregion
 
             #region V8 debug callback methods
@@ -2162,6 +2167,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] V8Object.Handle hObject,
                 [In] IntPtr pAction,
                 [In] IntPtr pArg
+            );
+
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Value.Flags V8Object_GetFlags(
+                [In] V8Object.Handle hObject
             );
 
             #endregion
@@ -3283,6 +3293,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Object_InvokeWithArrayBufferOrViewDataWithArg(hObject, pAction, pArg);
             }
 
+            V8Value.Flags IV8SplitProxyNative.V8Object_GetFlags(V8Object.Handle hObject)
+            {
+                return V8Object_GetFlags(hObject);
+            }
+
             #endregion
 
             #region V8 debug callback methods
@@ -4359,6 +4374,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] V8Object.Handle hObject,
                 [In] IntPtr pAction,
                 [In] IntPtr pArg
+            );
+
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Value.Flags V8Object_GetFlags(
+                [In] V8Object.Handle hObject
             );
 
             #endregion
@@ -5480,6 +5500,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Object_InvokeWithArrayBufferOrViewDataWithArg(hObject, pAction, pArg);
             }
 
+            V8Value.Flags IV8SplitProxyNative.V8Object_GetFlags(V8Object.Handle hObject)
+            {
+                return V8Object_GetFlags(hObject);
+            }
+
             #endregion
 
             #region V8 debug callback methods
@@ -6556,6 +6581,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] V8Object.Handle hObject,
                 [In] IntPtr pAction,
                 [In] IntPtr pArg
+            );
+
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Value.Flags V8Object_GetFlags(
+                [In] V8Object.Handle hObject
             );
 
             #endregion

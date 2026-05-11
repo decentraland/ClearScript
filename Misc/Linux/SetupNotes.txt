@@ -1,0 +1,17 @@
+Ubuntu 20.04
+
+sudo dpkg --add-architecture i386
+sudo apt update
+sudo apt install \
+    g++-10-aarch64-linux-gnu \
+    g++-10-arm-linux-gnueabihf \
+    g++-10:i386 \
+    libatomic1:i386 \
+    libc6-dev:i386 \
+    libc6:i386 \
+    libstdc++6:i386 \
+    python3.9
+
+Remove all default GCC pakages (GCC 9).
+Make /usr/bin/gcc a symbolic link to /usr/bin/gcc-10.
+Python 3.9 is incompatible with many scripts, so use update-alternatives.

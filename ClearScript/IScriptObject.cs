@@ -9,7 +9,7 @@ namespace Microsoft.ClearScript
     /// <summary>
     /// Represents a script object.
     /// </summary>
-    public interface IScriptObject : IDisposable
+    public interface IScriptObject : IDisposable, IAsyncDisposable
     {
         /// <summary>
         /// Gets the script engine that owns the object.

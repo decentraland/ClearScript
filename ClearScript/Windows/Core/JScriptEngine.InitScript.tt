@@ -5,30 +5,31 @@
 <#@ output extension=".cs" #>
 
 <#@ assembly name="EnvDTE" #>
+<#@ assembly name="System.Core" #>
 <#@ assembly name="System.Net.Http" #>
 
 <#@ import namespace="EnvDTE" #>
 <#@ import namespace="System.Collections.Generic" #>
 <#@ import namespace="System.IO" #>
+<#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Net.Http" #>
 
 <#
 var dte = (DTE)((IServiceProvider)Host).GetService(typeof(DTE));
 var solutionPath = Path.GetDirectoryName(dte.Solution.FullName);
 var scriptPath = Path.Combine(solutionPath, "ClearScript", "Windows", "Core", "JScriptEngine.InitScript.js");
-var script = File.ReadAllText(scriptPath);
-var contentData = new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("input", script) };
-using var client = new HttpClient();
-using var content = new FormUrlEncodedContent(contentData);
-using var response = client.PostAsync("https://www.toptal.com/developers/javascript-minifier/api/raw", content).Result;
-response.EnsureSuccessStatusCode();
-script = response.Content.ReadAsStringAsync().Result.Replace('\"', '\'');
+var lines = File.ReadAllLines(scriptPath).Select(line => string.IsNullOrWhiteSpace(line) ? string.Empty : "            " + line);
+var script = string.Join("\r\n", lines);
 #>
 
 namespace Microsoft.ClearScript.Windows.Core
 {
     public partial class JScriptEngine
     {
-        internal const string InitScript = "<#= script #>";
+        internal const string InitScript = @"
+        
+<#= script #>
+
+        ";
     }
 }

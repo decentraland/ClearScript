@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Microsoft.ClearScript.V8;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.ClearScript.Test
 {
@@ -19,12 +20,23 @@ namespace Microsoft.ClearScript.Test
         private const string flavor = "Release";
     #endif
 
-        public static void Main(string[] args)
+        public static int Main(string[] args)
         {
             if ((args.Length == 2) && (args[0] == "-t"))
             {
-                RunTest(args[1]);
-                return;
+                try
+                {
+                    RunTest(args[1]);
+                    return 0;
+                }
+                catch (TargetInvocationException exception) when (exception.InnerException is AssertInconclusiveException)
+                {
+                    return 1;
+                }
+                catch (Exception)
+                {
+                    return -1;
+                }
             }
 
             Console.WriteLine("ClearScript Console ({0}, {1}, {2} {3})", RuntimeInformation.FrameworkDescription.Trim(), RuntimeInformation.OSDescription.Trim(), RuntimeInformation.ProcessArchitecture, flavor);
@@ -39,6 +51,8 @@ namespace Microsoft.ClearScript.Test
                 RunStartupFile(engine);
                 RunConsole(engine);
             }
+
+            return 0;
         }
 
         private static void RunStartupFile(ScriptEngine engine)

@@ -22,10 +22,10 @@ namespace Microsoft.ClearScript
         string FileNameExtension { get; }
 
         /// <summary>
-        /// Allows script code to access non-host resources.
+        /// Allows script code to access non-public resources.
         /// </summary>
         /// <remarks>
-        /// By setting this property to a type you declare that script code running in the current
+        /// By setting this property to a type, you declare that script code running in the current
         /// script engine is to be treated as if it were part of that type's implementation. Doing
         /// so does not expose any host resources to script code, but it affects which host
         /// resources are importable and which members of exposed resources are accessible.
@@ -178,6 +178,31 @@ namespace Microsoft.ClearScript
         bool UseReflectionBindFallback { get; set; }
 
         /// <summary>
+        /// Controls whether enumerations are converted to their underlying integral type when passed to script code.
+        /// </summary>
+        /// <remarks>
+        /// When this property is set to <c>true</c>, the script engine converts enumerations to
+        /// their underlying types when passing them to script code. This conversion is lossy and
+        /// could break host method binding, property assignment, and other scenarios that rely on
+        /// enumeration type identity. It is recommended that you use this property in conjunction
+        /// with <see cref="AcceptEnumAsUnderlyingType"/>.
+        /// </remarks>
+        bool MarshalEnumAsUnderlyingType { get; set; }
+
+        /// <summary>
+        /// Controls whether scripts can pass integral values to enumeration-typed host properties or parameters.
+        /// </summary>
+        /// <remarks>
+        /// When this property is set to <c>true</c>, the script engine accepts integral values for
+        /// enumeration-typed host properties and parameters. Note that the default method binding
+        /// algorithm cannot support this property; it must be used in conjunction with
+        /// <see cref="DisableDynamicBinding"/> or <see cref="UseReflectionBindFallback"/>. The
+        /// script engine makes no attempt to validate integral values passed from script code
+        /// against the defined members of the target enumeration type.
+        /// </remarks>
+        bool AcceptEnumAsUnderlyingType { get; set; }
+
+        /// <summary>
         /// Enables or disables automatic host variable tunneling for by-reference arguments to script functions and delegates.
         /// </summary>
         /// <remarks>
@@ -220,12 +245,12 @@ namespace Microsoft.ClearScript
         /// to <c>null</c> or its closest equivalent in the script language. Other useful
         /// possibilities include
         /// <c><see cref="Undefined.Value">Undefined.Value</see></c> and
-        /// <c><see href="https://microsoft.github.io/ClearScript/Reference/html/F_Microsoft_ClearScript_Windows_Nothing_Value.htm">Nothing.Value</see></c>.
+        /// <c><see href="https://clearscript.clearfoundry.net/Reference/html/F_Microsoft_ClearScript_Windows_Nothing_Value.htm">Nothing.Value</see></c>.
         /// </para>
         /// <para>
         /// Note that <c><see cref="ScriptMemberFlags.WrapNullResult"/></c>,
         /// <c><see cref="EnableNullResultWrapping"/></c>, and
-        /// <c><see href="https://microsoft.github.io/ClearScript/Reference/html/T_Microsoft_ClearScript_Windows_WindowsScriptEngineFlags.htm">MarshalNullAsDispatch</see></c>
+        /// <c><see href="https://clearscript.clearfoundry.net/Reference/html/T_Microsoft_ClearScript_Windows_WindowsScriptEngineFlags.htm">MarshalNullAsDispatch</see></c>
         /// all take precedence over this property.
         /// </para>
         /// </remarks>

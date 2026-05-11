@@ -13,12 +13,14 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Runtime.InteropServices.Expando;
+using System.Threading.Tasks;
+using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Util.COM;
 
 namespace Microsoft.ClearScript
 {
-    internal partial class HostItem : DynamicObject, IReflect, IDynamic, IEnumVARIANT, ICustomQueryInterface, IHostItem, IHostTargetContext
+    internal partial class HostItem : DynamicObject, IReflect, IDynamic, IEnumVARIANT, ICustomQueryInterface, IDisposableHostItem, IHostTargetContext
     {
         #region data
 
@@ -820,6 +822,12 @@ namespace Microsoft.ClearScript
         private StringComparison MemberNameComparison => UseCaseInsensitiveMemberBinding ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
         private StringComparer MemberNameComparer => UseCaseInsensitiveMemberBinding ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
+
+        private void HostInvoke<TArg>(Action<TArg> action, in TArg arg)
+        {
+            BindTargetMemberData();
+            Engine.HostInvoke(action, arg);
+        }
 
         private TResult HostInvoke<TArg, TResult>(Func<TArg, TResult> func, in TArg arg)
         {
@@ -1784,8 +1792,8 @@ namespace Microsoft.ClearScript
             if (argCount < paramCount)
             {
                 var missingArgs = Enumerable.Repeat(Missing.Value, paramCount - argCount).ToArray();
-                args = args.Take(argCount).Concat(missingArgs).Concat(value.ToEnumerable()).ToArray();
-                bindArgs = bindArgs.Take(argCount).Concat(missingArgs).Concat(bindArgs[bindArgs.Length - 1].ToEnumerable()).ToArray();
+                args = args.Take(argCount).Concat(missingArgs).Concat(EnumerableHelpers.ToEnumerable(value)).ToArray();
+                bindArgs = bindArgs.Take(argCount).Concat(missingArgs).Concat(EnumerableHelpers.ToEnumerable(bindArgs[bindArgs.Length - 1])).ToArray();
             }
 
             // ReSharper disable once SuspiciousTypeConversion.Global
@@ -1813,7 +1821,7 @@ namespace Microsoft.ClearScript
                 }
             }
 
-            if (property.PropertyType.IsAssignableFromValue(ref value))
+            if (property.PropertyType.IsAssignableFromValue(this, ref value))
             {
                 args[args.Length - 1] = value;
                 InvokeHelpers.InvokeMethod(this, setMethod, Target.InvokeTarget, args, property.GetScriptMemberFlags(this));
@@ -1824,7 +1832,7 @@ namespace Microsoft.ClearScript
             // the property type. The latter has failed, so let's try the former.
 
             var setParams = setMethod.GetParameters();
-            if ((setParams.Length >= args.Length) && (setParams[args.Length - 1].ParameterType.IsAssignableFromValue(ref value)))
+            if ((setParams.Length >= args.Length) && (setParams[args.Length - 1].ParameterType.IsAssignableFromValue(this, ref value)))
             {
                 args[args.Length - 1] = value;
                 InvokeHelpers.InvokeMethod(this, setMethod, Target.InvokeTarget, args, property.GetScriptMemberFlags(this));
@@ -1853,7 +1861,7 @@ namespace Microsoft.ClearScript
         private object SetHostFieldWorker(FieldInfo field, object[] args)
         {
             var value = args[0];
-            if (field.FieldType.IsAssignableFromValue(ref value))
+            if (field.FieldType.IsAssignableFromValue(this, ref value))
             {
                 field.SetValue(Target.InvokeTarget, value);
                 return value;
@@ -2003,7 +2011,7 @@ namespace Microsoft.ClearScript
 
             if (indices.Length > 1)
             {
-                ThisDynamic.SetProperty(SpecialMemberNames.Default, indices.Concat(value.ToEnumerable()).ToArray());
+                ThisDynamic.SetProperty(SpecialMemberNames.Default, indices.Concat(EnumerableHelpers.ToEnumerable(value)).ToArray());
             }
 
             throw new InvalidOperationException("Invalid argument or index count");
@@ -2438,6 +2446,40 @@ namespace Microsoft.ClearScript
         public object Unwrap()
         {
             return Target.Target;
+        }
+
+        #endregion
+
+        #region IDisposableHostItem implementation
+
+        void IDisposableHostItem.Dispose()
+        {
+            HostInvoke(
+                static self =>
+                {
+                    if (self.BindSpecialTarget(out IDisposable disposable))
+                    {
+                        disposable.Dispose();
+                    }
+                },
+                this
+            );
+        }
+
+        object IDisposableHostItem.DisposeAsync()
+        {
+            return Engine.MarshalToScript(HostInvoke(
+                static self =>
+                {
+                    if (self.BindSpecialTarget(out IAsyncDisposable asyncDisposable))
+                    {
+                        return asyncDisposable.DisposeAsync().ToPromise(self.Engine);
+                    }
+
+                    return Task.CompletedTask.ToPromise(self.Engine);
+                },
+                this
+            ));
         }
 
         #endregion

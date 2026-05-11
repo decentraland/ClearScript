@@ -303,6 +303,8 @@ namespace Microsoft.ClearScript.Util
         public static bool HasAllFlags(this INVOKEKIND value, INVOKEKIND flags) => (value & flags) == flags;
         public static bool HasAnyFlag(this INVOKEKIND value, INVOKEKIND flags) => (value & flags) != 0;
 
+        public static object ToUnderlyingType<T>(this T value) where T : Enum => Convert.ChangeType(value, Enum.GetUnderlyingType(typeof(T)));
+
         #endregion
 
         #region numeric index helpers
@@ -526,6 +528,8 @@ namespace Microsoft.ClearScript.Util
             target = value;
             return oldValue;
         }
+
+        public static T Forward<T>(T value) => value;
 
         public static void QueueNativeCallback(INativeCallback callback)
         {

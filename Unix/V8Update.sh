@@ -1,10 +1,8 @@
 #!/bin/bash
 
-v8testedrev=13.3.415.23
+v8testedrev=14.7.173.23
 v8testedcommit=
 v8cherrypicks=
-v8linuxbuildcommit=3d9590754d5d23e62d15472c5baf6777ca59df20
-v8linuxclangcommit=184bc29dd86c3994a02b4f3feca125ffe785319c
 
 if [[ $v8testedcommit == "" ]]; then
     v8testedcommit=$v8testedrev
@@ -168,28 +166,22 @@ if [[ $download == true ]]; then
     echo "Applying patches ..."
     cd v8 || abort
     git config user.name ClearScript || fail
-    git config user.email "ClearScript@microsoft.com" || fail
+    git config user.email "clearscript@clearfoundry.net" || fail
     if [[ $v8cherrypicks != "" ]]; then
         git cherry-pick --allow-empty-message --keep-redundant-commits $v8cherrypicks >apply-cherry-picks.log 2>apply-cherry-picks.log || fail
     fi
-    git apply --reject --ignore-whitespace ../../V8Patch.txt 2>apply-patch.log || fail
-    if [[ $linux == true ]]; then
-        cd third_party/abseil-cpp || abort
-            git apply --reject --ignore-whitespace ../../../../AbseilCppPatch.txt 2>apply-patch.log || fail
-        cd ../..
-        cd build || abort
-        if [[ $v8linuxbuildcommit != "" ]]; then
-            git reset --hard $v8linuxbuildcommit >resetBuild.log || fail
-        fi
-        git apply --reject --ignore-whitespace ../../../BuildPatch.txt 2>apply-patch.log || fail
-        cd ..
-        cd tools/clang || abort
-        if [[ $v8linuxclangcommit != "" ]]; then
-            git reset --hard $v8linuxclangcommit >resetClang.log || fail
-        fi
-        cd ../..
-    fi
+    patch_failed=false
+    git apply --index --reject --ignore-whitespace ../../V8Patch.txt 2>apply-patch.log || patch_failed=true
+    cd build || abort
+    git apply --index --reject --ignore-whitespace ../../../BuildPatch.txt 2>apply-patch.log || patch_failed=true
     cd ..
+    cd third_party/icu || abort
+    git apply --index --reject --ignore-whitespace ../../../../ICUPatch.txt 2>apply-patch.log || patch_failed=true
+    cd ../..
+    cd ..
+    if [[ $patch_failed == true ]]; then
+        fail
+    fi
     
     echo "Downloading additional libraries ..."
     git clone -n https://github.com/nlohmann/json.git 2>clone-json.log || fail
@@ -210,28 +202,23 @@ fi
 cd build/v8 || abort
 
 echo "Creating/updating patches ..."
-git diff --ignore-space-change --ignore-space-at-eol >V8Patch.txt 2>create-patch.log || fail
+git diff --ignore-space-change --ignore-space-at-eol HEAD >V8Patch.txt 2>create-patch.log || fail
+cd build || abort
+git diff --ignore-space-change --ignore-space-at-eol HEAD >BuildPatch.txt 2>create-patch.log || fail
+cd ..
+cd third_party/icu || abort
+git diff --ignore-space-change --ignore-space-at-eol HEAD >ICUPatch.txt 2>create-patch.log || fail
+cd ../..
 
 if [[ $linux == true ]]; then
-    cd third_party/abseil-cpp || abort
-    git diff --ignore-space-change --ignore-space-at-eol >AbseilCppPatch.txt 2>create-patch.log || fail
-    cd ../..
-    cd build || abort
-    git restore linux/sysroot_scripts/sysroots.json || fail
-    git diff --ignore-space-change --ignore-space-at-eol >BuildPatch.txt 2>create-patch.log || fail
-    cd ..
-fi
-
-if [[ $linux == true ]]; then
-    echo "Installing LKG sysroots ..."
-    cp ../../sysroots.json build/linux/sysroot_scripts || fail
+    echo "Installing sysroots ..."
     build/linux/sysroot_scripts/install-sysroot.py --arch=x64 >install-x64-sysroot.log || fail
     build/linux/sysroot_scripts/install-sysroot.py --arch=i386 >install-i386-sysroot.log || fail
     build/linux/sysroot_scripts/install-sysroot.py --arch=$cpu >install-$cpu-sysroot.log || fail
 fi
 
 echo "Building V8 ..."
-gn gen out/$cpu/$mode --args="fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=$isdebug target_cpu=\"$cpu\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_fuzztest=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_use_external_startup_data=false v8_target_cpu=\"$cpu\"" >gn-$cpu-$mode.log 2>gn-$cpu-$mode.log || fail
+gn gen out/$cpu/$mode --args="fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=$isdebug target_cpu=\"$cpu\" use_clang_modules=false use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_fuzztest=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_enable_temporal_support=false v8_monolithic=true v8_use_external_startup_data=false v8_target_cpu=\"$cpu\"" >gn-$cpu-$mode.log 2>gn-$cpu-$mode.log || fail
 gn args out/$cpu/$mode --list >out/$cpu/$mode/allArgs.txt || fail
 ninja -C out/$cpu/$mode obj/libv8_monolith.a >build-$cpu-$mode.log || fail
 
@@ -239,11 +226,8 @@ cd ../..
 
 echo "Importing patches ..."
 cp build/v8/V8Patch.txt . || fail
-
-if [[ $linux == true ]]; then
-    cp build/v8/third_party/abseil-cpp/AbseilCppPatch.txt . || fail
-    cp build/v8/build/BuildPatch.txt . || fail
-fi
+cp build/v8/build/BuildPatch.txt . || fail
+cp build/v8/third_party/icu/ICUPatch.txt . || fail
 
 echo "Importing ICU data ..."
 cp build/v8/out/$cpu/$mode/icudtl.dat . || fail

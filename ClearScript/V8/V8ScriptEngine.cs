@@ -1100,8 +1100,7 @@ namespace Microsoft.ClearScript.V8
         {
             if ((left.Engine is V8ScriptEngine leftEngine) && (right.Engine is V8ScriptEngine rightEngine) && (leftEngine.runtime == rightEngine.runtime) && (left.GetHashCode() == right.GetHashCode()))
             {
-                var engineInternal = (ScriptObject)script.GetProperty("EngineInternal");
-                return (bool)engineInternal.InvokeMethod("strictEquals", left, right);
+                return (bool)EngineInternal.InvokeMethod("strictEquals", left, right);
             }
 
             return false;
@@ -1372,7 +1371,7 @@ namespace Microsoft.ClearScript.V8
         private object CreatePromise(Action<object, object> executor)
         {
             VerifyNotDisposed();
-            var v8Internal = (V8ScriptItem)script.GetProperty("EngineInternal");
+            var v8Internal = (V8ScriptItem)EngineInternal;
             return V8ScriptItem.Wrap(this, v8Internal.InvokeMethod(false, "createPromise", executor));
         }
 
@@ -1380,7 +1379,7 @@ namespace Microsoft.ClearScript.V8
         {
             VerifyNotDisposed();
             Func<T> getResult = () => task.Result;
-            var v8Internal = (V8ScriptItem)script.GetProperty("EngineInternal");
+            var v8Internal = (V8ScriptItem)EngineInternal;
             return V8ScriptItem.Wrap(this, v8Internal.InvokeMethod(false, "createSettledPromiseWithResult", getResult));
         }
 
@@ -1388,7 +1387,7 @@ namespace Microsoft.ClearScript.V8
         {
             VerifyNotDisposed();
             Action wait = task.Wait;
-            var v8Internal = (V8ScriptItem)script.GetProperty("EngineInternal");
+            var v8Internal = (V8ScriptItem)EngineInternal;
             return V8ScriptItem.Wrap(this, v8Internal.InvokeMethod(false, "createSettledPromise", wait));
         }
 
@@ -1396,7 +1395,7 @@ namespace Microsoft.ClearScript.V8
         {
             VerifyNotDisposed();
             Func<T> getResult = () => valueTask.Result;
-            var v8Internal = (V8ScriptItem)script.GetProperty("EngineInternal");
+            var v8Internal = (V8ScriptItem)EngineInternal;
             return V8ScriptItem.Wrap(this, v8Internal.InvokeMethod(false, "createSettledPromiseWithResult", getResult));
         }
 
@@ -1404,22 +1403,20 @@ namespace Microsoft.ClearScript.V8
         {
             VerifyNotDisposed();
             Action wait = () => WaitForValueTask(valueTask);
-            var v8Internal = (V8ScriptItem)script.GetProperty("EngineInternal");
+            var v8Internal = (V8ScriptItem)EngineInternal;
             return V8ScriptItem.Wrap(this, v8Internal.InvokeMethod(false, "createSettledPromise", wait));
         }
 
         private void CompletePromise<T>(Task<T> task, object resolve, object reject)
         {
             Func<T> getResult = () => task.Result;
-            var engineInternal = (ScriptObject)script.GetProperty("EngineInternal");
-            engineInternal.InvokeMethod("completePromiseWithResult", getResult, resolve, reject);
+            EngineInternal.InvokeMethod("completePromiseWithResult", getResult, resolve, reject);
         }
 
         private void CompletePromise(Task task, object resolve, object reject)
         {
             Action wait = task.Wait;
-            var engineInternal = (ScriptObject)script.GetProperty("EngineInternal");
-            engineInternal.InvokeMethod("completePromise", wait, resolve, reject);
+            EngineInternal.InvokeMethod("completePromise", wait, resolve, reject);
         }
 
         private static void WaitForValueTask(ValueTask valueTask)
@@ -1492,8 +1489,7 @@ namespace Microsoft.ClearScript.V8
             return ScriptInvoke(
                 static ctx =>
                 {
-                    var engineInternal = (ScriptObject)ctx.self.script.GetProperty("EngineInternal");
-                    var commandHolder = (ScriptObject)engineInternal.GetProperty("commandHolder");
+                    var commandHolder = (ScriptObject)ctx.self.EngineInternal.GetProperty("commandHolder");
                     commandHolder.SetProperty("command", ctx.command);
                     return ctx.self.BaseExecuteCommand("EngineInternal.getCommandResult(eval(EngineInternal.commandHolder.command))");
                 },
@@ -1504,8 +1500,7 @@ namespace Microsoft.ClearScript.V8
         /// <inheritdoc/>
         public override string GetStackTrace()
         {
-            var engineInternal = (ScriptObject)script.GetProperty("EngineInternal");
-            var stackTrace = (string)engineInternal.InvokeMethod("getStackTrace");
+            var stackTrace = (string)EngineInternal.InvokeMethod("getStackTrace");
             var lines = stackTrace.Split('\n');
             return string.Join("\n", lines.Skip(2));
         }
@@ -1612,6 +1607,11 @@ namespace Microsoft.ClearScript.V8
                 return obj;
             }
 
+            if (MarshalEnumAsUnderlyingType && (obj is Enum))
+            {
+                obj = Convert.ChangeType(obj, Enum.GetUnderlyingType(obj.GetType()));
+            }
+
             if (obj is long longValue)
             {
                 if (Flags.HasAllFlags(V8ScriptEngineFlags.MarshalAllInt64AsBigInt))
@@ -1699,7 +1699,7 @@ namespace Microsoft.ClearScript.V8
                 {
                     if (marshaledArrayMap?.TryGetValue(array, out var scriptArray) != true)
                     {
-                        var v8Internal = (V8ScriptItem)script.GetProperty("EngineInternal");
+                        var v8Internal = (V8ScriptItem)EngineInternal;
                         scriptArray = (V8ScriptItem)V8ScriptItem.Wrap(this, v8Internal.InvokeMethod(false, "createArray"));
                         (marshaledArrayMap ?? (marshaledArrayMap = new Dictionary<Array, V8ScriptItem>())).Add(array, scriptArray);
 
@@ -2112,7 +2112,7 @@ namespace Microsoft.ClearScript.V8
             Action<Exception> setExceptionWorker = exception => source.SetException(exception);
             var setException = (context is null) ? setExceptionWorker : exception => context.Post(_ => setExceptionWorker(exception), null);
 
-            var v8Internal = (V8ScriptItem)script.GetProperty("EngineInternal");
+            var v8Internal = (V8ScriptItem)EngineInternal;
 
             Action<object> onResolved = result =>
             {

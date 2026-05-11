@@ -11,7 +11,8 @@ namespace Microsoft.ClearScript
     internal interface IHostVariable
     {
         Type Type { get; }
-        object Value { get; set; }
+        object Value { get; }
+        object SetValue(IHostContext context, object value);
     }
 
     internal abstract class HostVariable : HostTarget
@@ -137,7 +138,7 @@ namespace Microsoft.ClearScript
                 {
                     if (args.Length == 1)
                     {
-                        result = context.Engine.PrepareResult(((IHostVariable)this).Value = args[0], typeof(T), ScriptMemberFlags.None, false);
+                        result = context.Engine.PrepareResult(((IHostVariable)this).SetValue(context, args[0]), typeof(T), ScriptMemberFlags.None, false);
                         return true;
                     }
                 }
@@ -156,24 +157,21 @@ namespace Microsoft.ClearScript
 
         #region IHostVariable implementation
 
-        object IHostVariable.Value
+        object IHostVariable.Value => Value;
+
+        object IHostVariable.SetValue(IHostContext context, object value)
         {
-            get => Value;
-
-            set
+            if (!typeof(T).IsAssignableFromValue(context, ref value))
             {
-                if (!typeof(T).IsAssignableFromValue(ref value))
-                {
-                    throw new InvalidOperationException("Assignment invalid due to type mismatch");
-                }
-
-                if ((value is IHostItem) || (value is HostTarget))
-                {
-                    throw new NotSupportedException("Unsupported value type");
-                }
-
-                Value = (T)value;
+                throw new InvalidOperationException("Assignment invalid due to type mismatch");
             }
+
+            if ((value is IHostItem) || (value is HostTarget))
+            {
+                throw new NotSupportedException("Unsupported value type");
+            }
+
+            return Value = (T)value;
         }
 
         #endregion

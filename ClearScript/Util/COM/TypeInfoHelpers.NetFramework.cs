@@ -14,19 +14,24 @@ namespace Microsoft.ClearScript.Util.COM
 
         public static Type GetManagedType(this ITypeInfo typeInfo)
         {
-            var guid = typeInfo.GetGuid();
-            return (guid == Guid.Empty) ? null : managedTypeMap.GetOrAdd(guid, _ =>
+            if (!HostSettings.DisableInteropAssemblyConstruction)
             {
-                var pTypeInfo = Marshal.GetComInterfaceForObject(typeInfo, typeof(ITypeInfo));
-                try
+                var guid = typeInfo.GetGuid();
+                return (guid == Guid.Empty) ? null : managedTypeMap.GetOrAdd(guid, _ =>
                 {
-                    return Marshal.GetTypeForITypeInfo(pTypeInfo);
-                }
-                finally
-                {
-                    Marshal.Release(pTypeInfo);
-                }
-            });
+                    var pTypeInfo = Marshal.GetComInterfaceForObject(typeInfo, typeof(ITypeInfo));
+                    try
+                    {
+                        return Marshal.GetTypeForITypeInfo(pTypeInfo);
+                    }
+                    finally
+                    {
+                        Marshal.Release(pTypeInfo);
+                    }
+                });
+            }
+
+            return null;
         }
     }
 }

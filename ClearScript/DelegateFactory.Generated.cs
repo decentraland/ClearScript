@@ -16,7 +16,7 @@ namespace Microsoft.ClearScript
 
         
         [ExcludeFromCodeCoverage]
-        private class ProcShim<TDelegate> : ProcShim
+        private sealed class ProcShim<TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = true;
@@ -72,7 +72,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class ProcShim<T1, TDelegate> : ProcShim
+        private sealed class ProcShim<T1, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1));
@@ -128,7 +128,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class ProcShim<T1, T2, TDelegate> : ProcShim
+        private sealed class ProcShim<T1, T2, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2));
@@ -186,7 +186,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class ProcShim<T1, T2, T3, TDelegate> : ProcShim
+        private sealed class ProcShim<T1, T2, T3, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3));
@@ -246,7 +246,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class ProcShim<T1, T2, T3, T4, TDelegate> : ProcShim
+        private sealed class ProcShim<T1, T2, T3, T4, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4));
@@ -308,7 +308,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class ProcShim<T1, T2, T3, T4, T5, TDelegate> : ProcShim
+        private sealed class ProcShim<T1, T2, T3, T4, T5, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5));
@@ -372,7 +372,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class ProcShim<T1, T2, T3, T4, T5, T6, TDelegate> : ProcShim
+        private sealed class ProcShim<T1, T2, T3, T4, T5, T6, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6));
@@ -438,7 +438,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class ProcShim<T1, T2, T3, T4, T5, T6, T7, TDelegate> : ProcShim
+        private sealed class ProcShim<T1, T2, T3, T4, T5, T6, T7, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, T7, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7));
@@ -506,7 +506,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, TDelegate> : ProcShim
+        private sealed class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8));
@@ -576,7 +576,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, TDelegate> : ProcShim
+        private sealed class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9));
@@ -648,7 +648,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TDelegate> : ProcShim
+        private sealed class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9), typeof(T10));
@@ -722,7 +722,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, TDelegate> : ProcShim
+        private sealed class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9), typeof(T10), typeof(T11));
@@ -798,7 +798,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, TDelegate> : ProcShim
+        private sealed class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9), typeof(T10), typeof(T11), typeof(T12));
@@ -876,7 +876,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, TDelegate> : ProcShim
+        private sealed class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9), typeof(T10), typeof(T11), typeof(T12), typeof(T13));
@@ -956,7 +956,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, TDelegate> : ProcShim
+        private sealed class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9), typeof(T10), typeof(T11), typeof(T12), typeof(T13), typeof(T14));
@@ -1038,7 +1038,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, TDelegate> : ProcShim
+        private sealed class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9), typeof(T10), typeof(T11), typeof(T12), typeof(T13), typeof(T14), typeof(T15));
@@ -1122,7 +1122,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TDelegate> : ProcShim
+        private sealed class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9), typeof(T10), typeof(T11), typeof(T12), typeof(T13), typeof(T14), typeof(T15), typeof(T16));
@@ -1209,7 +1209,7 @@ namespace Microsoft.ClearScript
         
         
         [ExcludeFromCodeCoverage]
-        private class FuncShim<TResult, TDelegate> : FuncShim<TResult>
+        private sealed class FuncShim<TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<TResult, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = true;
@@ -1261,7 +1261,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class FuncShim<T1, TResult, TDelegate> : FuncShim<TResult>
+        private sealed class FuncShim<T1, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, TResult, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1));
@@ -1313,7 +1313,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class FuncShim<T1, T2, TResult, TDelegate> : FuncShim<TResult>
+        private sealed class FuncShim<T1, T2, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, TResult, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2));
@@ -1367,7 +1367,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class FuncShim<T1, T2, T3, TResult, TDelegate> : FuncShim<TResult>
+        private sealed class FuncShim<T1, T2, T3, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, TResult, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3));
@@ -1423,7 +1423,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class FuncShim<T1, T2, T3, T4, TResult, TDelegate> : FuncShim<TResult>
+        private sealed class FuncShim<T1, T2, T3, T4, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, TResult, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4));
@@ -1481,7 +1481,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class FuncShim<T1, T2, T3, T4, T5, TResult, TDelegate> : FuncShim<TResult>
+        private sealed class FuncShim<T1, T2, T3, T4, T5, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, TResult, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5));
@@ -1541,7 +1541,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class FuncShim<T1, T2, T3, T4, T5, T6, TResult, TDelegate> : FuncShim<TResult>
+        private sealed class FuncShim<T1, T2, T3, T4, T5, T6, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, TResult, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6));
@@ -1603,7 +1603,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class FuncShim<T1, T2, T3, T4, T5, T6, T7, TResult, TDelegate> : FuncShim<TResult>
+        private sealed class FuncShim<T1, T2, T3, T4, T5, T6, T7, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, T7, TResult, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7));
@@ -1667,7 +1667,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, TResult, TDelegate> : FuncShim<TResult>
+        private sealed class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, TResult, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8));
@@ -1733,7 +1733,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult, TDelegate> : FuncShim<TResult>
+        private sealed class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9));
@@ -1801,7 +1801,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TResult, TDelegate> : FuncShim<TResult>
+        private sealed class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TResult, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9), typeof(T10));
@@ -1871,7 +1871,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, TResult, TDelegate> : FuncShim<TResult>
+        private sealed class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, TResult, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9), typeof(T10), typeof(T11));
@@ -1943,7 +1943,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, TResult, TDelegate> : FuncShim<TResult>
+        private sealed class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, TResult, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9), typeof(T10), typeof(T11), typeof(T12));
@@ -2017,7 +2017,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, TResult, TDelegate> : FuncShim<TResult>
+        private sealed class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, TResult, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9), typeof(T10), typeof(T11), typeof(T12), typeof(T13));
@@ -2093,7 +2093,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, TResult, TDelegate> : FuncShim<TResult>
+        private sealed class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, TResult, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9), typeof(T10), typeof(T11), typeof(T12), typeof(T13), typeof(T14));
@@ -2171,7 +2171,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, TResult, TDelegate> : FuncShim<TResult>
+        private sealed class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, TResult, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9), typeof(T10), typeof(T11), typeof(T12), typeof(T13), typeof(T14), typeof(T15));
@@ -2251,7 +2251,7 @@ namespace Microsoft.ClearScript
         }
         
         [ExcludeFromCodeCoverage]
-        private class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult, TDelegate> : FuncShim<TResult>
+        private sealed class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult, TDelegate>).GetMethod("InvokeTarget");
             private static readonly bool allByValue = GetAllByValue(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7), typeof(T8), typeof(T9), typeof(T10), typeof(T11), typeof(T12), typeof(T13), typeof(T14), typeof(T15), typeof(T16));

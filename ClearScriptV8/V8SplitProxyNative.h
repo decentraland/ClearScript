@@ -321,6 +321,7 @@ NATIVE_ENTRY_POINT(void) V8Object_InvokeMethod(const V8ObjectHandle& handle, con
 NATIVE_ENTRY_POINT(void) V8Object_GetArrayBufferOrViewInfo(const V8ObjectHandle& handle, V8Value& arrayBuffer, uint64_t& offset, uint64_t& size, uint64_t& length) noexcept;
 NATIVE_ENTRY_POINT(void) V8Object_InvokeWithArrayBufferOrViewData(const V8ObjectHandle& handle, void* pvAction) noexcept;
 NATIVE_ENTRY_POINT(void) V8Object_InvokeWithArrayBufferOrViewDataWithArg(const V8ObjectHandle& handle, void* pvAction, void* pvArg) noexcept;
+NATIVE_ENTRY_POINT(V8Value::Flags) V8Object_GetFlags(const V8ObjectHandle& handle) noexcept;
 
 NATIVE_ENTRY_POINT(void) V8DebugCallback_ConnectClient(const V8DebugCallbackHandle& handle) noexcept;
 NATIVE_ENTRY_POINT(void) V8DebugCallback_SendCommand(const V8DebugCallbackHandle& handle, const StdString& command) noexcept;

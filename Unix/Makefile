@@ -1,51 +1,51 @@
 ifdef DEBUG
-    CONFIG = Debug
+    CONFIG := Debug
 else
-    CONFIG = Release
+    CONFIG := Release
 endif
 
-KERNEL = $(shell uname -s)
+KERNEL := $(shell uname -s)
 ifeq ($(KERNEL), Darwin)
-    MAKELINUX = true
+    MAKELINUX := true
 else ifeq ($(KERNEL), Linux)
-    MAKELINUX = make
+    MAKELINUX := make
 else
     $(error unsupported operating system '$(KERNEL)')
 endif
 
-ARCH = $(shell uname -m)
+ARCH := $(shell uname -m)
 ifeq ($(ARCH), i386)
-    HOSTCPU = x86
+    HOSTCPU := x86
 else ifeq ($(ARCH), x86_64)
-    HOSTCPU = x64
+    HOSTCPU := x64
 else ifeq ($(ARCH), arm)
-    HOSTCPU = arm
+    HOSTCPU := arm
 else ifeq ($(ARCH), arm32)
-    HOSTCPU = arm
+    HOSTCPU := arm
 else ifeq ($(ARCH), aarch32)
-    HOSTCPU = arm
+    HOSTCPU := arm
 else ifeq ($(ARCH), arm64)
-    HOSTCPU = arm64
+    HOSTCPU := arm64
 else ifeq ($(ARCH), aarch64)
-    HOSTCPU = arm64
+    HOSTCPU := arm64
 else
     $(error unsupported machine architecture '$(ARCH)')
 endif
 
 ifeq ($(HOSTCPU), x64)
-    OTHERCPU = arm64
+    OTHERCPU := arm64
 else ifeq ($(HOSTCPU), arm64)
-    OTHERCPU = x64
+    OTHERCPU := x64
 else
     $(error unsupported build machine architecture '$(ARCH)')
 endif
 
-MAKEFILE = $(word $(words $(MAKEFILE_LIST)), $(MAKEFILE_LIST))
-MAKEDIR = $(dir $(abspath $(MAKEFILE)))
-ROOTDIR = $(abspath $(MAKEDIR)/..)
-UNIXDIR = $(ROOTDIR)/Unix
-NETCOREDIR = $(ROOTDIR)/NetCore
-NETSTANDARDDIR = $(ROOTDIR)/NetStandard
+MAKEFILE := $(word $(words $(MAKEFILE_LIST)), $(MAKEFILE_LIST))
+MAKEDIR := $(dir $(abspath $(MAKEFILE)))
+ROOTDIR := $(abspath $(MAKEDIR)/..)
+UNIXDIR := $(ROOTDIR)/Unix
+NETCOREDIR := $(ROOTDIR)/NetCore
+NETSTANDARDDIR := $(ROOTDIR)/NetStandard
 
 .PHONY: all test clean buildv8 cleanv8 zapv8 buildallrelease buildalldebug buildall cleanallrelease cleanalldebug cleanall
 

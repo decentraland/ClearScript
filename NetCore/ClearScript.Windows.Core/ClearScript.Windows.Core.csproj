@@ -5,7 +5,7 @@
         <RootNamespace>Microsoft.ClearScript.Windows</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <CheckEolTargetFramework>false</CheckEolTargetFramework>
-        <LangVersion>9.0</LangVersion>
+        <LangVersion>10.0</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
