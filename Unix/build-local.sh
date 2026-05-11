@@ -43,21 +43,35 @@ dump_logs() {
 
 trap dump_logs ERR
 
-require_apt() {
+require_ubuntu_2204() {
     if ! command -v apt-get >/dev/null 2>&1; then
-        echo "This script targets Ubuntu/Debian (apt). Install prerequisites manually." >&2
+        echo "This script targets Ubuntu 22.04 (apt). Install prerequisites manually." >&2
         exit 1
     fi
+    if [[ -r /etc/os-release ]]; then
+        # shellcheck disable=SC1091
+        . /etc/os-release
+        if [[ "${ID:-}" != "ubuntu" || "${VERSION_ID:-}" != "22.04" ]]; then
+            echo "Warning: this script targets Ubuntu 22.04; detected ${PRETTY_NAME:-unknown}." >&2
+            echo "         Continuing anyway — apt package names may differ." >&2
+        fi
+    fi
 }
+
+# Avoid interactive prompts during apt-get (notably needrestart's TUI,
+# which Ubuntu 22.04 enables by default and which hangs in scripts).
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
+export NEEDRESTART_SUSPEND=1
 
 apt_updated=false
 apt_install() {
     # apt_install pkg1 pkg2 ...
     if [[ "$apt_updated" == false ]]; then
-        sudo apt-get update
+        sudo -E apt-get update
         apt_updated=true
     fi
-    sudo apt-get install -y "$@"
+    sudo -E apt-get install -y --no-install-recommends "$@"
 }
 
 ensure_build_prereqs() {
@@ -101,7 +115,7 @@ build_one() {
     fi
 }
 
-require_apt
+require_ubuntu_2204
 ensure_build_prereqs
 ensure_dotnet8
 
