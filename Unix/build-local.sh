@@ -1,14 +1,18 @@
 #!/bin/bash
 #
-# Reproduce the Linux CI build locally (intended for WSL / Ubuntu 22.04).
+# Build the native ClearScriptV8 shared library locally (intended for
+# WSL / Ubuntu 22.04). Only invokes the V8/native Makefile target — the
+# C# samples that CI builds are skipped, since they need .NET 9.0 SDK
+# which isn't in jammy's default repos. CI builds those because the
+# ubuntu-22.04 runner image ships .NET 9 preinstalled.
+#
 # Usage: ./Unix/build-local.sh [x64|arm64|all]    (default: x64)
 #
-# Installs all prerequisites listed in docs/Details/Build.html
-# (git, .NET 8.0 SDK, clang, make, pkgconf) plus what V8's depot_tools
-# needs (python3, curl, build-essential). The arm64 cross-build
-# toolchain (g++-10-aarch64-linux-gnu) is installed on demand.
+# Installs needed prerequisites on demand (clang, make, pkgconf, python3,
+# curl, build-essential). The arm64 cross-build toolchain
+# (g++-10-aarch64-linux-gnu) is installed only when building for arm64.
 
-set -euo pipefail
+set -Eeuo pipefail
 
 cpu="${1:-x64}"
 
@@ -89,15 +93,6 @@ ensure_build_prereqs() {
     fi
 }
 
-ensure_dotnet8() {
-    if command -v dotnet >/dev/null 2>&1 \
-            && dotnet --list-sdks 2>/dev/null | grep -q '^8\.'; then
-        return
-    fi
-    echo "Installing .NET 8.0 SDK ..."
-    apt_install dotnet-sdk-8.0
-}
-
 ensure_arm64_toolchain() {
     if ! command -v aarch64-linux-gnu-g++-10 >/dev/null 2>&1; then
         echo "Installing arm64 cross-build tools ..."
@@ -109,15 +104,14 @@ build_one() {
     local target_cpu="$1"
     echo "==== Building for CPU=$target_cpu ===="
     if [[ "$target_cpu" == "x64" ]]; then
-        make -f Unix/Makefile
+        make -f Unix/ClearScriptV8/Makefile
     else
-        make -f Unix/Makefile CPU="$target_cpu"
+        make -f Unix/ClearScriptV8/Makefile CPU="$target_cpu"
     fi
 }
 
 require_ubuntu_2204
 ensure_build_prereqs
-ensure_dotnet8
 
 case "$cpu" in
     x64)
