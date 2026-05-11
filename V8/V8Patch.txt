@@ -45,7 +45,7 @@ new file mode 100644
 index 00000000000..3a55fc7f8bc
 --- /dev/null
 +++ b/include/ClearScript/polyfill.h
-@@ -0,0 +1,49 @@
+@@ -0,0 +1,53 @@
 +#ifndef INCLUDE_CLEARSCRIPT_POLYFILL_H_
 +#define INCLUDE_CLEARSCRIPT_POLYFILL_H_
 +
@@ -58,6 +58,7 @@ index 00000000000..3a55fc7f8bc
 +
 +namespace std {
 +
++#if !defined(__cpp_lib_smart_ptr_for_overwrite)
 +  // make_unique_for_overwrite
 +  template <typename T>
 +  constexpr unique_ptr<T> make_unique_for_overwrite() {
@@ -67,7 +68,9 @@ index 00000000000..3a55fc7f8bc
 +  constexpr unique_ptr<T> make_unique_for_overwrite(const size_t _Size) {
 +    return unique_ptr<T>(new remove_extent_t<T>[_Size]);
 +  }
-+  
++#endif
++
++#if !defined(__cpp_lib_format)
 +  // format
 +  inline void __append_format(std::ostringstream& oss, const char* fmt) {
 +      oss << fmt;
@@ -89,6 +92,7 @@ index 00000000000..3a55fc7f8bc
 +    __append_format(oss, fmt, std::forward<Args>(args)...);
 +    return oss.str();
 +  }
++#endif
 +
 +}
 +
