@@ -56,7 +56,7 @@ jobs:
     - name: Dump Logs
       if: always()
       run: |
-        for f in Unix/build/v8/apply-cherry-picks.log Unix/build/v8/apply-patch.log Unix/build/v8/gn-x64-Release.log Unix/build/v8/build-x64-Release.log Unix/build/v8/gn-arm64-Release.log Unix/build/v8/build-arm64-Release.log; do
+        for f in V8/build/v8/apply-cherry-picks.log V8/build/v8/apply-patch.log V8/build/v8/gn-x64-Release.log V8/build/v8/build-x64-Release.log V8/build/v8/gn-arm64-Release.log V8/build/v8/build-arm64-Release.log; do
           if [ -f "$f" ]; then echo "===== $f ====="; cat "$f"; fi
         done
     - name: Upload artifacts
@@ -81,7 +81,7 @@ jobs:
     - name: Dump Logs
       if: always()
       run: |
-        for f in Unix/build/v8/apply-cherry-picks.log Unix/build/v8/apply-patch.log Unix/build/v8/gn-arm64-Release.log Unix/build/v8/build-arm64-Release.log Unix/build/v8/gn-x64-Release.log Unix/build/v8/build-x64-Release.log; do
+        for f in V8/build/v8/apply-cherry-picks.log V8/build/v8/apply-patch.log V8/build/v8/gn-arm64-Release.log V8/build/v8/build-arm64-Release.log V8/build/v8/gn-x64-Release.log V8/build/v8/build-x64-Release.log; do
           if [ -f "$f" ]; then echo "===== $f ====="; cat "$f"; fi
         done
     - name: Upload artifacts
