@@ -17,10 +17,13 @@ namespace Microsoft.ClearScript
     {
         #region data
 
+        private ScriptObject engineInternal;
         private Type accessContext;
         private ScriptAccess defaultAccess;
         private bool enforceAnonymousTypeAccess;
         private bool exposeHostObjectStaticMembers;
+        private bool marshalEnumAsUnderlyingType;
+        private bool acceptEnumAsUnderlyingType;
         private CustomAttributeLoader customAttributeLoader;
 
         private DocumentSettings documentSettings;
@@ -178,6 +181,40 @@ namespace Microsoft.ClearScript
 
         /// <inheritdoc/>
         public bool UseReflectionBindFallback { get; set; }
+
+        /// <inheritdoc/>
+        public bool MarshalEnumAsUnderlyingType { 
+            get => marshalEnumAsUnderlyingType;
+            set
+            {
+                marshalEnumAsUnderlyingType = value;
+                OnAccessSettingsChanged();
+            }
+        }
+
+        /// <inheritdoc/>
+        public bool AcceptEnumAsUnderlyingType
+        {
+            get => acceptEnumAsUnderlyingType;
+            set
+            {
+                if (value != acceptEnumAsUnderlyingType)
+                {
+                    ScriptInvoke(
+                        static ctx =>
+                        {
+                            if (ctx.value != ctx.self.acceptEnumAsUnderlyingType)
+                            {
+                                ctx.self.acceptEnumAsUnderlyingType = ctx.value;
+                                ctx.self.ClearMethodBindCache();
+                                ctx.self.OnAccessSettingsChanged();
+                            }
+                        },
+                        (self: this, value)
+                    );
+                }
+            }
+        }
 
         /// <inheritdoc/>
         public bool EnableAutoHostVariables { get; set; }
@@ -524,6 +561,8 @@ namespace Microsoft.ClearScript
         #endregion
 
         #region internal members
+
+        internal ScriptObject EngineInternal => engineInternal ?? (engineInternal = (ScriptObject)Global["EngineInternal"]);
 
         internal abstract IUniqueNameManager DocumentNameManager { get; }
 

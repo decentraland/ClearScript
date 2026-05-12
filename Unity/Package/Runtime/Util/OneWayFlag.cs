@@ -13,7 +13,7 @@ namespace Microsoft.ClearScript.Util
 
         public bool Set()
         {
-            return MiscHelpers.Exchange(ref isSet, true) == false;
+            return !MiscHelpers.Exchange(ref isSet, true);
         }
     }
 

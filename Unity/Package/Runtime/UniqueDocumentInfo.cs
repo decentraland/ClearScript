@@ -5,7 +5,7 @@ using System;
 
 namespace Microsoft.ClearScript
 {
-    internal class UniqueDocumentInfo
+    internal sealed class UniqueDocumentInfo
     {
         public UniqueDocumentInfo(DocumentInfo info, ulong uniqueId, string uniqueName)
         {

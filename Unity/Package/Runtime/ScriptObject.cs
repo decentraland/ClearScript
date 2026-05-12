@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Threading.Tasks;
 
 namespace Microsoft.ClearScript
 {
@@ -68,6 +69,13 @@ namespace Microsoft.ClearScript
 
         /// <inheritdoc/>
         public abstract void Dispose();
+
+        #endregion
+
+        #region IAsyncDisposable implementation
+
+        /// <inheritdoc/>
+        public abstract ValueTask DisposeAsync();
 
         #endregion
     }

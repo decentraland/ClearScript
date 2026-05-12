@@ -19,7 +19,7 @@ namespace Microsoft.ClearScript.V8
     {
         #region data
 
-        private const string faviconUrl = "https://microsoft.github.io/ClearScript/favicon.png";
+        private const string faviconUrl = "https://clearscript.clearfoundry.net/favicon.png";
 
         private readonly Guid targetId = Guid.NewGuid();
         private readonly string name;

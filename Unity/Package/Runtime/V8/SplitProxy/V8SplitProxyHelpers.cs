@@ -1130,7 +1130,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             Async = 0x0002,
             Generator = 0x0004,
             Pending = 0x0008,
-            Rejected = 0x0010
+            Rejected = 0x0010,
+            Iterable = 0x0020,
+            AsyncIterable = 0x0040,
+            Disposable = 0x0080,
+            AsyncDisposable = 0x0100
         }
 
         public static bool HasAllFlags(this Flags value, Flags flags) => (value & flags) == flags;
@@ -1625,6 +1629,82 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
                 public unsafe ref FastResult AsRef() => ref Unsafe.AsRef<FastResult>(bits.ToPointer());
                 public unsafe ReadOnlySpan<FastResult> ToSpan(int length) => new(bits.ToPointer(), length);
+
+                #region Object overrides
+
+                public override bool Equals(object obj) => (obj is Ptr ptr) && (this == ptr);
+                public override int GetHashCode() => bits.GetHashCode();
+
+                #endregion
+            }
+
+            #endregion
+        }
+
+        #endregion
+
+        #region Nested type: FastScriptArg
+
+        [StructLayout(LayoutKind.Explicit)]
+        public struct FastScriptArg
+        {
+            // IMPORTANT: maintain bitwise equivalence with native struct V8Value::FastScriptArg
+            [FieldOffset(0)] private WireData data;
+
+            #region Nested type: Ptr
+
+            // ReSharper disable once MemberHidesStaticFromOuterClass
+            public readonly struct Ptr
+            {
+                private readonly IntPtr bits;
+
+                private Ptr(IntPtr bits) => this.bits = bits;
+
+                public static readonly Ptr Null = new(IntPtr.Zero);
+
+                public static bool operator ==(Ptr left, Ptr right) => left.bits == right.bits;
+                public static bool operator !=(Ptr left, Ptr right) => left.bits != right.bits;
+
+                public static explicit operator IntPtr(Ptr ptr) => ptr.bits;
+                public static explicit operator Ptr(IntPtr bits) => new(bits);
+
+                #region Object overrides
+
+                public override bool Equals(object obj) => (obj is Ptr ptr) && (this == ptr);
+                public override int GetHashCode() => bits.GetHashCode();
+
+                #endregion
+            }
+
+            #endregion
+        }
+
+        #endregion
+
+        #region Nested type: FastScriptResult
+
+        [StructLayout(LayoutKind.Explicit)]
+        public struct FastScriptResult
+        {
+            // IMPORTANT: maintain bitwise equivalence with native struct V8Value::FastScriptResult
+            [FieldOffset(0)] private WireData data;
+
+            #region Nested type: Ptr
+
+            // ReSharper disable once MemberHidesStaticFromOuterClass
+            public readonly struct Ptr
+            {
+                private readonly IntPtr bits;
+
+                private Ptr(IntPtr bits) => this.bits = bits;
+
+                public static readonly Ptr Null = new(IntPtr.Zero);
+
+                public static bool operator ==(Ptr left, Ptr right) => left.bits == right.bits;
+                public static bool operator !=(Ptr left, Ptr right) => left.bits != right.bits;
+
+                public static explicit operator IntPtr(Ptr ptr) => ptr.bits;
+                public static explicit operator Ptr(IntPtr bits) => new(bits);
 
                 #region Object overrides
 

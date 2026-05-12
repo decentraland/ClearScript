@@ -64,7 +64,7 @@ namespace Microsoft.ClearScript.Util.COM
             {
                 // WORKAROUND: In some .NET test environments, Marshal.GetExceptionForHR sometimes
                 // converts COM error codes into unrelated exceptions that break critical features
-                // such as double execution prevention (see BugFix_DoubleExecution_JScript et al).
+                // such as double execution prevention (see BugFix_DoubleExecution_JScript et al.).
 
                 if (result == SCRIPT_E_REPORTED)
                 {
