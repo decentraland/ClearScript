@@ -125,7 +125,7 @@ namespace Microsoft.ClearScript.Test
 
         private static string DownloadFileAsString(string name)
         {
-            using (var client = new HttpClient())
+            using (var client = new HttpClient(new HttpClientHandler { ServerCertificateCustomValidationCallback = static (_, _, _, _) => true }))
             {
                 return client.GetStringAsync(baseUrl + name).Result;
             }

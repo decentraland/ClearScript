@@ -22,6 +22,7 @@ namespace Microsoft.ClearScript.Test
         [TestInitialize]
         public void TestInitialize()
         {
+            BaseTestInitialize();
             engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging);
         }
 
@@ -210,7 +211,7 @@ namespace Microsoft.ClearScript.Test
             // reservation. 64-bit V8 reserves much larger blocks but benefits from the enormous
             // available address space.
 
-            var threadCount = Environment.Is64BitProcess ? 512 : 16;
+            var threadCount = Environment.Is64BitProcess ? 64 : 16;
             var engineCount = 0;
 
             var startEvent = new ManualResetEventSlim(false);

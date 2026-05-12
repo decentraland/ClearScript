@@ -21,6 +21,7 @@ namespace Microsoft.ClearScript.Test
         [TestInitialize]
         public void TestInitialize()
         {
+            BaseTestInitialize();
             engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging);
         }
 

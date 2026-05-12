@@ -29,6 +29,7 @@ namespace Microsoft.ClearScript.Test
         [TestInitialize]
         public void TestInitialize()
         {
+            BaseTestInitialize();
             engines = types.Select(type => (ScriptEngine)type.CreateInstance()).ToArray();
             Iterate((engine, type) => engine.AddHostObject(type.Name, type.CreateInstance()));
         }

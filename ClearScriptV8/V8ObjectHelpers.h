@@ -26,4 +26,6 @@ struct V8ObjectHelpers final: StaticBase
     typedef void ArrayBufferOrViewDataCallback(void* pvData, void* pvArg);
     static void GetArrayBufferOrViewInfo(const SharedPtr<V8ObjectHolder>& spHolder, V8Value& arrayBuffer, size_t& offset, size_t& size, size_t& length);
     static void InvokeWithArrayBufferOrViewData(const SharedPtr<V8ObjectHolder>& spHolder, ArrayBufferOrViewDataCallback* pCallback, void* pvArg);
+
+    static V8Value::Flags GetFlags(const SharedPtr<V8ObjectHolder>& spHolder);
 };

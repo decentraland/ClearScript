@@ -125,8 +125,7 @@ namespace Microsoft.ClearScript.Windows
         /// </remarks>
         public override string ExecuteCommand(string command)
         {
-            var engineInternal = (ScriptObject)Global.GetProperty("EngineInternal");
-            engineInternal.SetProperty("command", command);
+            EngineInternal.SetProperty("command", command);
             return base.ExecuteCommand("EngineInternal.getCommandResult(eval(EngineInternal.command))");
         }
 

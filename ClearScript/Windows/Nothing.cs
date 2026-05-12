@@ -13,7 +13,7 @@ namespace Microsoft.ClearScript.Windows
     /// variant of type <c>VT_DISPATCH</c>. VBScript interprets this as the special object
     /// reference
     /// <c><see href="https://docs.microsoft.com/en-us/previous-versions//f8tbc79x(v=vs.85)">Nothing</see></c>.
-    /// In JScript it appears as a value that is equal to, but not strictly equal to,
+    /// In JScript, it appears as a value that is equal to, but not strictly equal to,
     /// <c><see href="https://developer.mozilla.org/en-US/docs/Glossary/Undefined">undefined</see></c>.
     /// </remarks>
     public class Nothing : INothingTag

@@ -67,6 +67,11 @@ namespace Microsoft.ClearScript.Util
             return !type.IsGenericParameter && !type.ContainsGenericParameters;
         }
 
+        public static bool IsFullyPublic(this Type type)
+        {
+            return type.IsPublic || (type.IsNestedPublic && type.DeclaringType.IsFullyPublic());
+        }
+
         public static bool IsCompilerGenerated(this Type type, IHostContext context)
         {
             return type.HasCustomAttributes<CompilerGeneratedAttribute>(context, false);
@@ -180,12 +185,29 @@ namespace Microsoft.ClearScript.Util
 
         public static bool IsUnknownCOMObject(this Type type)
         {
-            return type.IsCOMObject && (type.GetInterfaces().Length < 1);
+            if (!type.IsCOMObject)
+            {
+                return false;
+            }
+
+            var found = false;
+            
+            var interfaces = type.GetInterfaces();
+            for (var index = 0; index < interfaces.Length; index++)
+            {
+                if (interfaces[index].FullName != "System.Runtime.InteropServices.IDynamicInterfaceCastable")
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            return !found;
         }
 
-        public static bool IsAssignableFromValue(this Type type, ref object value)
+        public static bool IsAssignableFromValue(this Type type, IHostContext context, ref object value)
         {
-            return type.IsAssignableFromValueInternal(ref value, null, null);
+            return type.IsAssignableFromValueInternal(context, ref value, null, null);
         }
 
         public static bool IsAssignableToGenericType(this Type type, Type genericTypeDefinition, out Type[] typeArgs)
@@ -260,6 +282,11 @@ namespace Microsoft.ClearScript.Util
 
         public static bool IsCOMVisible(this Type type, IHostContext context)
         {
+            if (!type.IsFullyPublic())
+            {
+                return false;
+            }
+
             var attribute = type.GetOrLoadCustomAttribute<ComVisibleAttribute>(context, false);
             if (attribute is not null)
             {
@@ -272,7 +299,7 @@ namespace Microsoft.ClearScript.Util
                 return attribute.Value;
             }
 
-            return false;
+            return true;
         }
 
         public static string GetRootName(this Type type)
@@ -763,13 +790,13 @@ namespace Microsoft.ClearScript.Util
             return (index >= 0) ? name.Substring(0, index) : name;
         }
 
-        private static bool IsBindableFromArg(this Type type, object value, Type valueType, out BindArgCost cost)
+        private static bool IsBindableFromArg(this Type type, IHostContext context, object value, Type valueType, out BindArgCost cost)
         {
             cost = new BindArgCost();
-            return type.IsAssignableFromValueInternal(ref value, valueType, cost);
+            return type.IsAssignableFromValueInternal(context, ref value, valueType, cost);
         }
 
-        private static bool IsAssignableFromValueInternal(this Type type, ref object value, Type valueType, BindArgCost cost)
+        private static bool IsAssignableFromValueInternal(this Type type, IHostContext context, ref object value, Type valueType, BindArgCost cost)
         {
             var typeIsByRef = type.IsByRef;
             if (typeIsByRef)
@@ -849,7 +876,7 @@ namespace Microsoft.ClearScript.Util
             if (type.IsNullable())
             {
                 var underlyingType = Nullable.GetUnderlyingType(type);
-                if (underlyingType.IsAssignableFromValueInternal(ref value, valueType, cost))
+                if (underlyingType.IsAssignableFromValueInternal(context, ref value, valueType, cost))
                 {
                     if (cost is not null)
                     {
@@ -894,7 +921,23 @@ namespace Microsoft.ClearScript.Util
 
             if (type.IsEnum)
             {
-                return Enum.GetUnderlyingType(type).IsAssignableFromValueInternal(ref value, valueType, cost) && value.IsZero();
+                var isValid = Enum.GetUnderlyingType(type).IsAssignableFromValueInternal(context, ref value, valueType, cost);
+                if (!isValid)
+                {
+                    return false;
+                }
+
+                if (context.Engine.AcceptEnumAsUnderlyingType)
+                {
+                    if (cost is not null)
+                    {
+                        cost.Flags |= BindArgFlags.EnumConversion;
+                    }
+                    
+                    return true;
+                }
+
+                return value.IsZero();
             }
 
             if (valueType.IsEnum)
@@ -1220,6 +1263,7 @@ namespace Microsoft.ClearScript.Util
             NullableTransition,
             NumericConversion,
             ImplicitConversion,
+            EnumConversion,
             ByRefMismatch
         }
 
@@ -1234,6 +1278,7 @@ namespace Microsoft.ClearScript.Util
             NullableTransition = 1 << BindArgFlag.NullableTransition,
             NumericConversion = 1 << BindArgFlag.NumericConversion,
             ImplicitConversion = 1 << BindArgFlag.ImplicitConversion,
+            EnumConversion = 1 << BindArgFlag.EnumConversion,
             ByRefMismatch = 1 << BindArgFlag.ByRefMismatch
         }
 
@@ -1366,7 +1411,7 @@ namespace Microsoft.ClearScript.Util
                         continue;
                     }
 
-                    if (!paramType.IsBindableFromArg(args[argIndex], argTypes[argIndex], out cost))
+                    if (!paramType.IsBindableFromArg(context, args[argIndex], argTypes[argIndex], out cost))
                     {
                         return null;
                     }
@@ -1382,7 +1427,7 @@ namespace Microsoft.ClearScript.Util
                         return new BindCandidate<T>(candidate, defaultArgCount, true, argCosts);
                     }
 
-                    if ((argIndex == (args.Length - 1)) && paramType.IsBindableFromArg(args[argIndex], argTypes[argIndex], out cost))
+                    if ((argIndex == (args.Length - 1)) && paramType.IsBindableFromArg(context, args[argIndex], argTypes[argIndex], out cost))
                     {
                         argCosts.Add(cost);
                         return new BindCandidate<T>(candidate, defaultArgCount, true, argCosts);
@@ -1391,7 +1436,7 @@ namespace Microsoft.ClearScript.Util
                     paramType = paramType.GetElementType();
                     for (; argIndex < args.Length; argIndex++)
                     {
-                        if (!paramType.IsBindableFromArg(args[argIndex], argTypes[argIndex], out cost))
+                        if (!paramType.IsBindableFromArg(context, args[argIndex], argTypes[argIndex], out cost))
                         {
                             return null;
                         }

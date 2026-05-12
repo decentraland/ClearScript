@@ -7,13 +7,15 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Util.COM;
+using Microsoft.ClearScript.V8.FastProxy;
 
 namespace Microsoft.ClearScript.V8
 {
-    internal abstract class V8ScriptItem : ScriptItem, IJavaScriptObject
+    internal abstract class V8ScriptItem : ScriptItem, IV8FastJavaScriptObject
     {
         private readonly V8ScriptEngine engine;
         private readonly IV8Object target;
@@ -296,8 +298,7 @@ namespace Microsoft.ClearScript.V8
                 return engine.MarshalToHost(engine.ScriptInvoke(static ctx => ctx.self.target.Invoke(ctx.asConstructor, ctx.self.engine.MarshalToScript(ctx.args)), (self: this, asConstructor, args)), false);
             }
 
-            var engineInternal = (ScriptObject)engine.Global.GetProperty("EngineInternal");
-            return engineInternal.InvokeMethod("invokeMethod", holder, this, args);
+            return engine.EngineInternal.InvokeMethod("invokeMethod", holder, this, args);
         }
 
         public override object InvokeMethod(string name, params object[] args)
@@ -332,6 +333,8 @@ namespace Microsoft.ClearScript.V8
 
         public JavaScriptObjectFlags Flags => target.ObjectFlags;
 
+        public void Update() => engine.ScriptInvoke(static target => target.Update(), target);
+
         #endregion
 
         #region IDisposable implementation
@@ -340,6 +343,28 @@ namespace Microsoft.ClearScript.V8
         {
             if (disposedFlag.Set())
             {
+                if (Flags.HasAllFlags(JavaScriptObjectFlags.Disposable))
+                {
+                    engine.EngineInternal.InvokeMethod("dispose", this);
+                }
+
+                target.Dispose();
+            }
+        }
+
+        #endregion
+
+        #region IAsyncDisposable implementation
+
+        public override async ValueTask DisposeAsync()
+        {
+            if (disposedFlag.Set())
+            {
+                if (Flags.HasAnyFlag(JavaScriptObjectFlags.AsyncDisposable | JavaScriptObjectFlags.Disposable))
+                {
+                    await engine.EngineInternal.InvokeMethod("disposeAsync", this).ToTask();
+                }
+
                 target.Dispose();
             }
         }
@@ -631,7 +656,7 @@ namespace Microsoft.ClearScript.V8
 
             #region Nested type: Enumerator
 
-            private class Enumerator : IEnumerator<object>
+            private sealed class Enumerator : IEnumerator<object>
             {
                 private readonly V8Array array;
                 private readonly int count;

@@ -10,6 +10,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Util.COM;
@@ -306,14 +307,12 @@ namespace Microsoft.ClearScript.Windows.Core
         {
             VerifyNotDisposed();
 
-            var engineInternal = (ScriptObject)engine.Global.GetProperty("EngineInternal");
-
             if (asConstructor)
             {
-                return engineInternal.InvokeMethod("invokeConstructor", this, args);
+                return engine.EngineInternal.InvokeMethod("invokeConstructor", this, args);
             }
 
-            return engineInternal.InvokeMethod("invokeMethod", holder, this, args);
+            return engine.EngineInternal.InvokeMethod("invokeMethod", holder, this, args);
         }
 
         public override object InvokeMethod(string name, params object[] args)
@@ -468,6 +467,16 @@ namespace Microsoft.ClearScript.Windows.Core
 
         #endregion
 
+        #region IAsyncDisposable implementation
+
+        public override ValueTask DisposeAsync()
+        {
+            Dispose();
+            return default;
+        }
+
+        #endregion
+
         #region Nested type: WindowsJavaScriptObject
 
         private sealed class WindowsJavaScriptObject : WindowsScriptItem, IJavaScriptObject
@@ -482,6 +491,10 @@ namespace Microsoft.ClearScript.Windows.Core
             public JavaScriptObjectKind Kind => JavaScriptObjectKind.Unknown;
 
             public JavaScriptObjectFlags Flags => JavaScriptObjectFlags.None;
+
+            public void Update()
+            {
+            }
 
             #endregion
         }

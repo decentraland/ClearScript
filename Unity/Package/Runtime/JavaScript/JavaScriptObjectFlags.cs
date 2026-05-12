@@ -54,7 +54,27 @@ namespace Microsoft.ClearScript.JavaScript
         /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</see>.
         /// This attribute has no meaning if <c><see cref="Pending"/></c> is present.
         /// </summary>
-        Rejected = 0x00000010
+        Rejected = 0x00000010,
+
+        /// <summary>
+        /// Indicates that the object supports iteration.
+        /// </summary>
+        Iterable = 0x00000020,
+
+        /// <summary>
+        /// Indicates that the object supports asynchronous iteration.
+        /// </summary>
+        AsyncIterable = 0x00000040,
+
+        /// <summary>
+        /// Indicates that the object supports disposal.
+        /// </summary>
+        Disposable = 0x00000080,
+
+        /// <summary>
+        /// Indicates that the object supports asynchronous disposal.
+        /// </summary>
+        AsyncDisposable = 0x00000100
     }
 
     internal static class JavaScriptObjectFlagsHelpers

@@ -8,7 +8,7 @@ namespace Microsoft.ClearScript.Util
         object Value { get; set; }
     }
 
-    internal class Holder<T> : IHolder
+    internal sealed class Holder<T> : IHolder
     {
         public T Value { get; set; }
 

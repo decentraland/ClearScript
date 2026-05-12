@@ -10,7 +10,8 @@ namespace Microsoft.ClearScript
     internal interface IByRefArg
     {
         Type Type { get; }
-        object Value { get; set; }
+        object Value { get; }
+        object SetValue(IHostContext context, object value);
     }
 
     internal interface IOutArg : IByRefArg
@@ -80,11 +81,9 @@ namespace Microsoft.ClearScript
 
         #region IByRefArg implementation
 
-        object IByRefArg.Value
-        {
-            get => target.Value;
-            set => ((IHostVariable)target).Value = value;
-        }
+        object IByRefArg.Value => target.Value;
+        
+        object IByRefArg.SetValue(IHostContext context, object value) => ((IHostVariable)target).SetValue(context, value);
 
         #endregion
     }

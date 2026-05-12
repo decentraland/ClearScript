@@ -94,6 +94,8 @@ public:
     void GetV8ObjectArrayBufferOrViewInfo(void* pvObject, V8Value& arrayBuffer, size_t& offset, size_t& size, size_t& length);
     void InvokeWithV8ObjectArrayBufferOrViewData(void* pvObject, V8ObjectHelpers::ArrayBufferOrViewDataCallback* pCallback, void* pvArg);
 
+    V8Value::Flags GetV8ObjectFlags(void* pvObject);
+
     void InitializeImportMeta(v8::Local<v8::Context> hContext, v8::Local<v8::Module> hModule, v8::Local<v8::Object> hMeta);
     v8::MaybeLocal<v8::Promise> ImportModule(v8::Local<v8::Data> hHostDefinedOptions, v8::Local<v8::Value> hResourceName, v8::Local<v8::String> hSpecifier, v8::Local<v8::FixedArray> hImportAssertions);
     v8::MaybeLocal<v8::Module> ResolveModule(v8::Local<v8::String> hSpecifier, v8::Local<v8::Module> hReferrer);
@@ -176,6 +178,16 @@ private:
     v8::Local<v8::Symbol> GetAsyncIteratorSymbol()
     {
         return m_spIsolateImpl->GetAsyncIteratorSymbol();
+    }
+
+    v8::Local<v8::Symbol> GetDisposeSymbol()
+    {
+        return m_spIsolateImpl->GetDisposeSymbol();
+    }
+
+    v8::Local<v8::Symbol> GetAsyncDisposeSymbol()
+    {
+        return m_spIsolateImpl->GetAsyncDisposeSymbol();
     }
 
     v8::Local<v8::Symbol> GetToStringTagSymbol()
@@ -380,14 +392,9 @@ private:
         m_spIsolateImpl->CancelTerminateExecution();
     }
 
-    int ContextDisposedNotification()
+    void ContextDisposedNotification()
     {
-        return m_spIsolateImpl->ContextDisposedNotification();
-    }
-
-    void RequestGarbageCollectionForTesting(v8::Isolate::GarbageCollectionType type)
-    {
-        m_spIsolateImpl->RequestGarbageCollectionForTesting(type);
+        m_spIsolateImpl->ContextDisposedNotification();
     }
 
     void ClearCachesForTesting()
@@ -416,6 +423,7 @@ private:
     ~V8ContextImpl();
 
     SharedPtr<V8WeakContextBinding> GetWeakBinding();
+    v8::Local<v8::Object> GetEngineInternal();
 
     HostObjectHolder* GetHostObjectHolder(v8::Local<v8::Object> hObject);
     bool SetHostObjectHolder(v8::Local<v8::Object> hObject, HostObjectHolder* pHolder);
@@ -440,12 +448,20 @@ private:
     static void GetGlobalPropertyIndices(const v8::PropertyCallbackInfo<v8::Array>& info);
 
     static void HostObjectConstructorCallHandler(const v8::FunctionCallbackInfo<v8::Value>& info);
+
     static void GetHostObjectIterator(const v8::FunctionCallbackInfo<v8::Value>& info);
     static void GetHostObjectAsyncIterator(const v8::FunctionCallbackInfo<v8::Value>& info);
+    static void DisposeHostObject(const v8::FunctionCallbackInfo<v8::Value>& info);
+    static void AsyncDisposeHostObject(const v8::FunctionCallbackInfo<v8::Value>& info);
+
     static void GetFastHostObjectIterator(const v8::FunctionCallbackInfo<v8::Value>& info);
     static void GetFastHostObjectAsyncIterator(const v8::FunctionCallbackInfo<v8::Value>& info);
+    static void DisposeFastHostObject(const v8::FunctionCallbackInfo<v8::Value>& info);
+    static void AsyncDisposeFastHostObject(const v8::FunctionCallbackInfo<v8::Value>& info);
+
     static void GetHostObjectJson(const v8::FunctionCallbackInfo<v8::Value>& info);
     static void CreateFunctionForHostDelegate(const v8::FunctionCallbackInfo<v8::Value>& info);
+
     static void InvokeHostDelegate(const v8::FunctionCallbackInfo<v8::Value>& info);
 
     static v8::Intercepted GetHostObjectProperty(v8::Local<v8::Name> hKey, const v8::PropertyCallbackInfo<v8::Value>& info);
@@ -528,6 +544,7 @@ private:
     Persistent<v8::Private> m_hCacheKey;
     Persistent<v8::Private> m_hAccessTokenKey;
     Persistent<v8::Object> m_hAccessToken;
+    Persistent<v8::Object> m_hEngineInternal;
     Persistent<v8::String> m_hInternalUseOnly;
     Persistent<v8::String> m_hStackKey;
     Persistent<v8::String> m_hObjectNotInvocable;

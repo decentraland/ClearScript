@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set v8testedrev=13.3.415.23
+set v8testedrev=14.7.173.23
 set v8testedcommit=
 set v8cherrypicks=
 
@@ -78,9 +78,9 @@ goto Exit
 :CheckOSDone
 
 :CheckMSVS
-if "%VisualStudioVersion%"=="16.0" goto CheckMSVSDone
 if "%VisualStudioVersion%"=="17.0" goto CheckMSVSDone
-echo Error: This script requires a Visual Studio 2019 or 2022 Developer Command Prompt.
+if "%VisualStudioVersion%"=="18.0" goto CheckMSVSDone
+echo Error: This script requires a Visual Studio 2022 or 2026 Developer Command Prompt.
 echo Browse to http://www.visualstudio.com for more information.
 goto Exit
 :CheckMSVSDone
@@ -183,15 +183,31 @@ echo Applying patches ...
 cd v8
 call git config user.name ClearScript
 if errorlevel 1 goto Error
-call git config user.email "ClearScript@microsoft.com"
+call git config user.email "clearscript@clearfoundry.net"
 if errorlevel 1 goto Error
-if "%v8cherrypicks%"=="" goto ApplyV8Patch
+if "%v8cherrypicks%"=="" goto ApplyPatchFiles
 call git cherry-pick --allow-empty-message --keep-redundant-commits %v8cherrypicks% >applyCherryPicks.log 2>&1
 if errorlevel 1 goto Error
-:ApplyV8Patch
-call git apply --reject --ignore-whitespace ..\..\V8Patch.txt 2>applyV8Patch.log
-if errorlevel 1 goto Error
+:ApplyPatchFiles
+setlocal
+set patchFailed=false
+call git apply --index --reject --ignore-whitespace ..\..\V8Patch.txt 2>applyPatch.log
+if errorlevel 1 set patchFailed=true
+cd build
+call git apply --index --reject --ignore-whitespace ..\..\..\BuildPatch.txt 2>applyPatch.log
+if errorlevel 1 set patchFailed=true
 cd ..
+cd third_party\icu
+call git apply --index --reject --ignore-whitespace ..\..\..\..\ICUPatch.txt 2>applyPatch.log
+if errorlevel 1 set patchFailed=true
+cd ..\..
+if "%patchFailed%"=="true" goto ApplyPatchesFailed
+endlocal
+cd ..
+goto ApplyPatchesDone
+:ApplyPatchesFailed
+endlocal
+goto Error
 :ApplyPatchesDone
 
 :DownloadMiscDone
@@ -215,8 +231,16 @@ cd ..
 :CreatePatches
 echo Creating/updating patches ...
 cd v8
-call git diff --ignore-space-change --ignore-space-at-eol >V8Patch.txt 2>createV8Patch.log
+call git diff --ignore-space-change --ignore-space-at-eol HEAD >V8Patch.txt 2>createPatch.log
 if errorlevel 1 goto Error
+cd build
+call git diff --ignore-space-change --ignore-space-at-eol HEAD >BuildPatch.txt 2>createPatch.log
+if errorlevel 1 goto Error
+cd ..
+cd third_party\icu
+call git diff --ignore-space-change --ignore-space-at-eol HEAD >ICUPatch.txt 2>createPatch.log
+if errorlevel 1 goto Error
+cd ..\..
 cd ..
 :CreatePatchesDone
 
@@ -226,7 +250,7 @@ setlocal
 call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x64_x86 >nul
 if errorlevel 1 goto Build32BitError
 echo Building V8 (x86) ...
-call gn gen out\Win32\%mode% --args="fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=%isdebug% target_cpu=\"x86\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_fuzztest=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_target_cpu=\"x86\" v8_use_external_startup_data=false" >gn-Win32-%mode%.log 2>&1
+call gn gen out\Win32\%mode% --args="fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=%isdebug% target_cpu=\"x86\" use_clang_modules=false use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_fuzztest=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_enable_temporal_support=false v8_monolithic=true v8_target_cpu=\"x86\" v8_use_external_startup_data=false" >gn-Win32-%mode%.log 2>&1
 if errorlevel 1 goto Build32BitError
 call gn args out\Win32\%mode% --list >out\Win32\%mode%\allArgs.txt
 if errorlevel 1 goto Build32BitError
@@ -246,7 +270,7 @@ setlocal
 call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x64 >nul
 if errorlevel 1 goto Build64BitError
 echo Building V8 (x64) ...
-call gn gen out\x64\%mode% --args="fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=%isdebug% target_cpu=\"x64\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_fuzztest=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_target_cpu=\"x64\" v8_use_external_startup_data=false" >gn-x64-%mode%.log 2>&1
+call gn gen out\x64\%mode% --args="fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=%isdebug% target_cpu=\"x64\" use_clang_modules=false use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_fuzztest=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_enable_temporal_support=false v8_monolithic=true v8_target_cpu=\"x64\" v8_use_external_startup_data=false" >gn-x64-%mode%.log 2>&1
 if errorlevel 1 goto Build64BitError
 call gn args out\x64\%mode% --list >out\x64\%mode%\allArgs.txt
 if errorlevel 1 goto Build64BitError
@@ -266,7 +290,7 @@ setlocal
 call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x64_arm64 >nul
 if errorlevel 1 goto BuildArm64BitError
 echo Building V8 (arm64) ...
-call gn gen out\arm64\%mode% --args="fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=%isdebug% target_cpu=\"arm64\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_fuzztest=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_target_cpu=\"arm64\" v8_use_external_startup_data=false" >gn-arm64-%mode%.log 2>&1
+call gn gen out\arm64\%mode% --args="fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=%isdebug% target_cpu=\"arm64\" use_clang_modules=false use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_fuzztest=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_enable_temporal_support=false v8_monolithic=true v8_target_cpu=\"arm64\" v8_use_external_startup_data=false" >gn-arm64-%mode%.log 2>&1
 if errorlevel 1 goto BuildArm64BitError
 call gn args out\arm64\%mode% --list >out\arm64\%mode%\allArgs.txt
 if errorlevel 1 goto BuildArm64BitError
@@ -293,6 +317,10 @@ cd ..
 :ImportPatches
 echo Importing patches ...
 copy build\v8\V8Patch.txt .\ >nul
+if errorlevel 1 goto Error
+copy build\v8\build\BuildPatch.txt .\ >nul
+if errorlevel 1 goto Error
+copy build\v8\third_party\icu\ICUPatch.txt .\ >nul
 if errorlevel 1 goto Error
 :ImportPatchesDone
 

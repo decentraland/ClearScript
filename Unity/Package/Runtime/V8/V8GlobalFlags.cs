@@ -34,6 +34,11 @@ namespace Microsoft.ClearScript.V8
         /// in the background, accelerating garbage collection, just-in-time compilation, and other
         /// activities. Use this option if you encounter issues related to V8's background work.
         /// </summary>
-        DisableBackgroundWork = 0x00000004
+        DisableBackgroundWork = 0x00000004,
+
+        /// <summary>
+        /// Specifies that <see href="https://github.com/tc39/proposal-explicit-resource-management">ExplicitResourceManagement</see> is to be disabled.
+        /// </summary>
+        DisableExplicitResourceManagement = 0x00000008
     }
 }

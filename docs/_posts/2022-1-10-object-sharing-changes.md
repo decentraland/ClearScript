@@ -25,7 +25,7 @@ using var engine2 = runtime.CreateScriptEngine();
 
 This creates a V8 runtime with two script engines – an arrangement that looks something like this:
 
-![Two Engines One Runtime](/ClearScript/images/Two-Engines-One-Runtime.svg)
+![Two Engines One Runtime](/images/Two-Engines-One-Runtime.svg)
 
 Now let's create a script object in one engine and copy a reference to the other:
 
@@ -38,7 +38,7 @@ engine2.Script.foo = engine1.Script.foo;
 
 Executing this code in ClearScript 7.1 or earlier results in the following:
 
-![Two Engines One Runtime Double Proxy](/ClearScript/images/Two-Engines-One-Runtime-Double-Proxy.svg)
+![Two Engines One Runtime Double Proxy](/images/Two-Engines-One-Runtime-Double-Proxy.svg)
 
 With this setup, `foo` in `engine2` is very expensive to access and may be missing some functionality. For example, [JavaScript iteration protocols](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols) can't be routed through the managed proxy.
 
@@ -46,7 +46,7 @@ This "double proxy" construction is usually required, as different script engine
 
 ClearScript 7.2 detects this case and produces the following configuration for the same code:
 
-![Two Engines One Runtime Shared Object](/ClearScript/images/Two-Engines-One-Runtime-Shared-Object.svg)
+![Two Engines One Runtime Shared Object](/images/Two-Engines-One-Runtime-Shared-Object.svg)
 
 All script engines in the same V8 runtime can be given direct access to each other's objects with full functionality, performance, and safety.
 
@@ -63,7 +63,7 @@ using var engine2 = new V8ScriptEngine();
 
 In memory, this setup looks something like this:
 
-![Two Engines Two Runtimes](/ClearScript/images/Two-Engines-Two-Runtimes.svg)
+![Two Engines Two Runtimes](/images/Two-Engines-Two-Runtimes.svg)
 
 Normally, script engines in separate runtimes can't share objects. However, [`SharedArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) was designed specifically for sharing memory across runtimes.
 
@@ -78,13 +78,13 @@ engine2.Script.sab = engine1.Script.sab;
 
 In ClearScript 7.1 and earlier, this code results in the following:
 
-![Two Engines Two Runtimes Double Proxy](/ClearScript/images/Two-Engines-Two-Runtimes-Double-Proxy.svg)
+![Two Engines Two Runtimes Double Proxy](/images/Two-Engines-Two-Runtimes-Double-Proxy.svg)
 
 In this configuration, `sab` in `engine2` is a "double proxy" that really isn't very useful. For example, you can't create [data views](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView) or [typed arrays](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray) on top of it. Additionally, it incurs a lot of overhead, as all access is routed through the host back to `engine1`.
 
 However, the same code in ClearScript 7.2 results in this:
 
-![Two Engines Two Runtimes Shared Backing Store](/ClearScript/images/Two-Engines-Two-Runtimes-Shared-Backing-Store.svg)
+![Two Engines Two Runtimes Shared Backing Store](/images/Two-Engines-Two-Runtimes-Shared-Backing-Store.svg)
 
 This arrangement supports the full functionality and performance of shared array buffers in both script engines, with independent access to the shared backing store.
 

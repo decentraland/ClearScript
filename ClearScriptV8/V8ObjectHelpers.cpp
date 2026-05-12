@@ -95,3 +95,10 @@ void V8ObjectHelpers::InvokeWithArrayBufferOrViewData(const SharedPtr<V8ObjectHo
 {
     spHolder.DerefAs<V8ObjectHolderImpl>().InvokeWithArrayBufferOrViewData(pCallback, pvArg);
 }
+
+//-----------------------------------------------------------------------------
+
+V8Value::Flags V8ObjectHelpers::GetFlags(const SharedPtr<V8ObjectHolder>& spHolder)
+{
+    return spHolder.DerefAs<V8ObjectHolderImpl>().GetFlags();
+}

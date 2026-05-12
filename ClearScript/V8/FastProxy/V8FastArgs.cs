@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Buffers;
 using System.Numerics;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.V8.SplitProxy;
@@ -13,6 +14,8 @@ namespace Microsoft.ClearScript.V8.FastProxy
     /// </summary>
     public readonly ref struct V8FastArgs
     {
+        private static readonly ArrayPool<object> objectArrayPool = ArrayPool<object>.Create();
+
         private readonly ReadOnlySpan<V8Value.FastArg> args;
         private readonly V8FastArgKind argKind;
         private readonly object[] objects;
@@ -432,11 +435,19 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// </remarks>
         public T Get<T>(int index, string name = null) => V8FastArgImpl.Get<T>(args[index], GetObject(index), argKind, name);
 
+        internal void Dispose()
+        {
+            if (objects is not null)
+            {
+                objectArrayPool.Return(objects);
+            }
+        }
+
         private static void EnsureObjects(ref object[] objects, int count)
         {
             if (objects is null)
             {
-                objects = new object[count];
+                objects = objectArrayPool.Rent(count);
                 for (var index = 0; index < count; index++)
                 {
                     objects[index] = Nonexistent.Value;

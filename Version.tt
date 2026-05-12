@@ -1,5 +1,5 @@
 <#
-    var version = new Version(7, 5, 0);
-    var versionSuffix = string.Empty;
+    var version = new Version(7, 5, 1);
+    var versionSuffix = "";
     new Random(versionSuffix.Length); // suppress "versionSuffix not used" warning
 #>

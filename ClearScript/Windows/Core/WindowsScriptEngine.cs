@@ -331,6 +331,11 @@ namespace Microsoft.ClearScript.Windows.Core
                 return nullDispatch;
             }
 
+            if (MarshalEnumAsUnderlyingType && (obj is Enum))
+            {
+                obj = Convert.ChangeType(obj, Enum.GetUnderlyingType(obj.GetType()));
+            }
+
             if (engineFlags.HasAllFlags(WindowsScriptEngineFlags.MarshalDateTimeAsDate) && (obj is DateTime))
             {
                 return obj;

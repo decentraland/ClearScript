@@ -95,11 +95,11 @@ namespace Microsoft.ClearScript.Util
                             var byRefArg = args[innerIndex] as IByRefArg;
                             if (byRefArg is null)
                             {
-                                tailArgs.SetValue(CompatibleArg.Get(param.Name, tailArgType, args[innerIndex]), innerIndex - index);
+                                tailArgs.SetValue(CompatibleArg.Get(context, param.Name, tailArgType, args[innerIndex]), innerIndex - index);
                             }
                             else
                             {
-                                tailArgs.SetValue(CompatibleArg.Get(param.Name, tailArgType, byRefArg.Value), innerIndex - index);
+                                tailArgs.SetValue(CompatibleArg.Get(context, param.Name, tailArgType, byRefArg.Value), innerIndex - index);
                                 byRefArgInfo.Add(new ByRefArgItem(byRefArg, tailArgs, innerIndex - index));
                             }
                         }
@@ -115,11 +115,11 @@ namespace Microsoft.ClearScript.Util
                     var byRefArg = args[index] as IByRefArg;
                     if (byRefArg is null)
                     {
-                        argList.Add(CompatibleArg.Get(param, args[index]));
+                        argList.Add(CompatibleArg.Get(context, param, args[index]));
                     }
                     else
                     {
-                        argList.Add(CompatibleArg.Get(param, byRefArg.Value));
+                        argList.Add(CompatibleArg.Get(context, param, byRefArg.Value));
                         byRefArgInfo.Add(new ByRefArgItem(byRefArg, null, index));
                     }
                 }
@@ -154,7 +154,7 @@ namespace Microsoft.ClearScript.Util
             foreach (var item in byRefArgInfo)
             {
                 var array = item.Array ?? finalArgs;
-                item.ByRefArg.Value = array.GetValue(item.Index);
+                item.ByRefArg.SetValue(context, array.GetValue(item.Index));
             }
 
             for (var index = 0; index < finalArgs.Length; index++)
@@ -207,14 +207,14 @@ namespace Microsoft.ClearScript.Util
         {
             private static readonly ConcurrentDictionary<Type, CompatibleArg> map = new();
 
-            public static object Get(ParameterInfo param, object value)
+            public static object Get(IHostContext context, ParameterInfo param, object value)
             {
-                return Get(param.Name, param.ParameterType, value);
+                return Get(context, param.Name, param.ParameterType, value);
             }
 
-            public static object Get(string paramName, Type type, object value)
+            public static object Get(IHostContext context, string paramName, Type type, object value)
             {
-                return type.IsAssignableFromValue(ref value) ? value : GetImpl(type).Get(paramName, value);
+                return type.IsAssignableFromValue(context, ref value) ? value : GetImpl(type).Get(paramName, value);
             }
             public abstract object Get(string paramName, object value);
 

@@ -13,5 +13,6 @@ enum class V8GlobalFlags : uint32_t
     None = 0,
     EnableTopLevelAwait = 0x00000001,
     DisableJITCompilation = 0x00000002,
-    DisableBackgroundWork = 0x00000004
+    DisableBackgroundWork = 0x00000004,
+    DisableExplicitResourceManagement = 0x00000008
 };

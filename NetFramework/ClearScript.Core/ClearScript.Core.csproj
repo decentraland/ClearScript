@@ -4,7 +4,7 @@
         <TargetFrameworks>net462;net471</TargetFrameworks>
         <RootNamespace>Microsoft.ClearScript</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-        <LangVersion>9.0</LangVersion>
+        <LangVersion>10.0</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -209,7 +209,7 @@
     </ItemGroup>
 
     <!-- ReSharper disable once UnknownProperty -->
-    <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <ItemGroup Condition="'$(TargetFramework)'=='net462'">
         <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
         <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     </ItemGroup>

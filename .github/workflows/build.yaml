@@ -53,6 +53,12 @@ jobs:
       run: |
         make -f Unix/Makefile
         make -f Unix/Makefile CPU=arm64
+    - name: Dump Logs
+      if: always()
+      run: |
+        for f in V8/build/v8/apply-cherry-picks.log V8/build/v8/apply-patch.log V8/build/v8/gn-x64-Release.log V8/build/v8/build-x64-Release.log V8/build/v8/gn-arm64-Release.log V8/build/v8/build-arm64-Release.log; do
+          if [ -f "$f" ]; then echo "===== $f ====="; cat "$f"; fi
+        done
     - name: Upload artifacts
       uses: actions/upload-artifact@v5
       with:
@@ -72,6 +78,12 @@ jobs:
       run: |
         make -f Unix/Makefile CPU=arm64
         make -f Unix/Makefile CPU=x64
+    - name: Dump Logs
+      if: always()
+      run: |
+        for f in V8/build/v8/apply-cherry-picks.log V8/build/v8/apply-patch.log V8/build/v8/gn-arm64-Release.log V8/build/v8/build-arm64-Release.log V8/build/v8/gn-x64-Release.log V8/build/v8/build-x64-Release.log; do
+          if [ -f "$f" ]; then echo "===== $f ====="; cat "$f"; fi
+        done
     - name: Upload artifacts
       uses: actions/upload-artifact@v5
       with:

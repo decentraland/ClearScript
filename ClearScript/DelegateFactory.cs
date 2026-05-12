@@ -185,11 +185,11 @@ namespace Microsoft.ClearScript
                 return (arg is IByRefArg byRefArg) ? byRefArg.Value : arg;
             }
 
-            protected static void SetArgValue(object arg, object value)
+            protected void SetArgValue(object arg, object value)
             {
                 if (arg is IByRefArg byRefArg)
                 {
-                    byRefArg.Value = value;
+                    byRefArg.SetValue(Engine, value);
                 }
             }
 

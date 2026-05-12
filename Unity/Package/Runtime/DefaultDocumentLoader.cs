@@ -27,9 +27,12 @@ namespace Microsoft.ClearScript
             ".." + Path.AltDirectorySeparatorChar,
         };
 
+        private static readonly Func<HttpClientHandler> defaultHttpClientHandlerFactory = static () => new HttpClientHandler();
+
         private readonly List<Document> cache = new();
         private long fileCheckCount;
         private long webCheckCount;
+        private Func<HttpClientHandler> httpClientHandlerFactory;
 
         // ReSharper disable EmptyConstructor
 
@@ -42,6 +45,12 @@ namespace Microsoft.ClearScript
         }
 
         // ReSharper restore EmptyConstructor
+
+        internal Func<HttpClientHandler> HttpClientHandlerFactory
+        {
+            get => httpClientHandlerFactory ?? defaultHttpClientHandlerFactory;
+            set => httpClientHandlerFactory = value;
+        }
 
         private Task<(Document, List<Uri>)> GetCachedDocumentOrCandidateUrisAsync(DocumentSettings settings, DocumentInfo? sourceInfo, Uri uri)
         {
@@ -229,7 +238,7 @@ namespace Microsoft.ClearScript
         private async Task<bool> WebDocumentExistsAsync(Uri uri)
         {
             Interlocked.Increment(ref webCheckCount);
-            using (var client = new HttpClient())
+            using (var client = new HttpClient(HttpClientHandlerFactory()))
             {
                 using (var request = new HttpRequestMessage(HttpMethod.Head, uri))
                 {
@@ -282,7 +291,7 @@ namespace Microsoft.ClearScript
             }
             else
             {
-                using (var client = new HttpClient())
+                using (var client = new HttpClient(HttpClientHandlerFactory()))
                 {
                     contents = await client.GetStringAsync(uri).ConfigureAwait(false);
                 }

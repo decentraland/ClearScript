@@ -7,7 +7,7 @@ ClearScript 7.2.2 is paired with V8 9.8, which no longer supports Top-Level Awai
 
 [Top-Level Await](https://github.com/tc39/proposal-top-level-await) is a feature that enables code at the outermost scope of an [ECMAScript 6](https://262.ecma-international.org/6.0/#sec-modules) module to be executed as an [async function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function).
 
-ClearScript 7.1.3 added an [API](https://microsoft.github.io/ClearScript/Reference/html/P_Microsoft_ClearScript_V8_V8Settings_EnableTopLevelAwait.htm) for controlling Top-Level Await. When enabled, it caused module evaluation to return a [promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), eventually to be resolved with the module's evaluation result.
+ClearScript 7.1.3 added an [API](https://clearscript.clearfoundry.net/Reference/html/P_Microsoft_ClearScript_V8_V8Settings_EnableTopLevelAwait.htm) for controlling Top-Level Await. When enabled, it caused module evaluation to return a [promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), eventually to be resolved with the module's evaluation result.
 
 Unfortunately, due to a [V8 bug](https://bugs.chromium.org/p/v8/issues/detail?id=11715), the promise resolution value is always [undefined](https://developer.mozilla.org/en-US/docs/Glossary/undefined). For that reason, and to maintain compatibility with hosts that rely on _immediate_ module evaluation results, ClearScript left Top-Level Await disabled by default.
 

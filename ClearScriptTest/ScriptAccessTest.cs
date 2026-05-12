@@ -37,6 +37,7 @@ namespace Microsoft.ClearScript.Test
         [TestInitialize]
         public void TestInitialize()
         {
+            BaseTestInitialize();
             engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging);
             engine.AddHostObject("testObject", testInterface = testObject = new TestObject());
             engine.AddHostObject("testInterface", HostItem.Wrap(engine, testObject, typeof(ITestInterface)));

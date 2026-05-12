@@ -49,5 +49,14 @@ namespace Microsoft.ClearScript
             get => customAttributeLoader ?? CustomAttributeLoader.Default;
             set => customAttributeLoader = value;
         }
+
+        /// <summary>
+        /// Enables or disables interop assembly construction.
+        /// </summary>
+        /// <remarks>
+        /// Setting this property to <c>true</c> disables the construction of interop assemblies
+        /// at runtime. It is effective only on .NET Framework.
+        /// </remarks>
+        public static bool DisableInteropAssemblyConstruction { get; set; }
     }
 }

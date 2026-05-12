@@ -1,0 +1,108 @@
+name: Build platform binaries
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Which platform to build'
+        type: choice
+        required: true
+        options:
+          - windows
+          - linux
+          - macos
+jobs:
+  windows:
+    if: inputs.platform == 'windows'
+    name: Windows binaries
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: cmd
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+    - name: Build V8
+      run: |
+        path C:\Windows\System32;C:\Windows;C:\Windows\System32\WindowsPowerShell\v1.0;C:\Program Files\Git\bin
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat"
+        V8Update.cmd
+    - name: Dump Logs
+      if: always()
+      run: |
+        if exist V8\build\v8\gn-x64-Release.log type V8\build\v8\gn-x64-Release.log
+        if exist V8\build\v8\build-x64-Release.log type V8\build\v8\build-x64-Release.log
+        if exist V8\build\v8\gn-arm64-Release.log type V8\build\v8\gn-arm64-Release.log
+        if exist V8\build\v8\build-arm64-Release.log type V8\build\v8\build-arm64-Release.log
+    - name: Build ClearScript
+      run: |
+        path %PATH%;C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin
+        msbuild -t:Restore -t:ClearScriptV8\ClearScriptV8_win-x64 -t:ClearScriptV8\ClearScriptV8_win-arm64 "-t:_NET Standard\ClearScript_V8_ICUData" -p:Configuration=Release -m ClearScript.sln
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v5
+      with:
+        name: windows-binaries
+        if-no-files-found: error
+        retention-days: 1
+        path: |
+          bin\Release\ClearScriptV8.win-x64.dll
+          bin\Release\ClearScriptV8.win-arm64.dll
+          bin\Release\netstandard1.0\ClearScript.V8.ICUData.dll
+          bin\Release\ClearScriptV8.win-x64.pdb
+          bin\Release\ClearScriptV8.win-arm64.pdb
+          bin\Release\netstandard1.0\ClearScript.V8.ICUData.pdb
+  linux:
+    if: inputs.platform == 'linux'
+    name: Linux binaries
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+    - name: Install ARM64 cross-build tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y g++-10-aarch64-linux-gnu
+    - name: Build
+      run: |
+        make -f Unix/Makefile
+        make -f Unix/Makefile CPU=arm64
+    - name: Dump Logs
+      if: always()
+      run: |
+        for f in V8/build/v8/apply-cherry-picks.log V8/build/v8/apply-patch.log V8/build/v8/gn-x64-Release.log V8/build/v8/build-x64-Release.log V8/build/v8/gn-arm64-Release.log V8/build/v8/build-arm64-Release.log; do
+          if [ -f "$f" ]; then echo "===== $f ====="; cat "$f"; fi
+        done
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v5
+      with:
+        name: linux-binaries
+        if-no-files-found: error
+        retention-days: 1
+        path: |
+          bin/Release/Unix/ClearScriptV8.linux-x64.so
+          bin/Release/Unix/ClearScriptV8.linux-arm64.so
+  macos:
+    if: inputs.platform == 'macos'
+    name: macOS binaries
+    runs-on: macos-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+    - name: Build
+      run: |
+        make -f Unix/Makefile CPU=arm64
+        make -f Unix/Makefile CPU=x64
+    - name: Dump Logs
+      if: always()
+      run: |
+        for f in V8/build/v8/apply-cherry-picks.log V8/build/v8/apply-patch.log V8/build/v8/gn-arm64-Release.log V8/build/v8/build-arm64-Release.log V8/build/v8/gn-x64-Release.log V8/build/v8/build-x64-Release.log; do
+          if [ -f "$f" ]; then echo "===== $f ====="; cat "$f"; fi
+        done
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v5
+      with:
+        name: macos-binaries
+        if-no-files-found: error
+        retention-days: 1
+        path: |
+          bin/Release/Unix/ClearScriptV8.osx-x64.dylib
+          bin/Release/Unix/ClearScriptV8.osx-arm64.dylib

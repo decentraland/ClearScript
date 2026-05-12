@@ -24,7 +24,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         public V8Value.Subtype Subtype { get; }
 
-        public V8Value.Flags Flags { get; }
+        public V8Value.Flags Flags { get; private set; }
 
         #region IV8Object implementation
 
@@ -100,6 +100,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 if (Flags.HasAllFlags(V8Value.Flags.Rejected))
                 {
                     flags |= JavaScriptObjectFlags.Rejected;
+                }
+
+                if (Flags.HasAllFlags(V8Value.Flags.Iterable))
+                {
+                    flags |= JavaScriptObjectFlags.Iterable;
+                }
+
+                if (Flags.HasAllFlags(V8Value.Flags.AsyncIterable))
+                {
+                    flags |= JavaScriptObjectFlags.AsyncIterable;
+                }
+
+                if (Flags.HasAllFlags(V8Value.Flags.Disposable))
+                {
+                    flags |= JavaScriptObjectFlags.Disposable;
+                }
+
+                if (Flags.HasAllFlags(V8Value.Flags.AsyncDisposable))
+                {
+                    flags |= JavaScriptObjectFlags.AsyncDisposable;
                 }
 
                 return flags;
@@ -306,6 +326,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 var pAction = actionScope.Value;
                 V8SplitProxyNative.Invoke(static (instance, ctx) => instance.V8Object_InvokeWithArrayBufferOrViewDataWithArg(ctx.Handle, ctx.pAction, ctx.pCtx), (Handle, pAction, pCtx));
             }
+        }
+
+        public void Update()
+        {
+            Flags = V8SplitProxyNative.InvokeRaw(static (instance, handle) => instance.V8Object_GetFlags(handle), Handle);
         }
 
         #endregion

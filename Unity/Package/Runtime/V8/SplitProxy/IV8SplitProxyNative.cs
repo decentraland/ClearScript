@@ -221,6 +221,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         void V8Object_GetArrayBufferOrViewInfo(V8Object.Handle hObject, out IV8Object arrayBuffer, out ulong offset, out ulong size, out ulong length);
         void V8Object_InvokeWithArrayBufferOrViewData(V8Object.Handle hObject, IntPtr pAction);
         void V8Object_InvokeWithArrayBufferOrViewDataWithArg(V8Object.Handle hObject, IntPtr pAction, IntPtr pArg);
+        V8Value.Flags V8Object_GetFlags(V8Object.Handle hObject);
 
         #endregion
 

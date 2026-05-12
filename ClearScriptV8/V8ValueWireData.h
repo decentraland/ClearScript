@@ -130,3 +130,29 @@ struct V8Value::FastResult final: WireData
 //-----------------------------------------------------------------------------
 
 static_assert(sizeof(V8Value::FastResult) == sizeof(V8Value::WireData));
+
+//-----------------------------------------------------------------------------
+// V8Value::FastScriptArg
+//-----------------------------------------------------------------------------
+
+struct V8Value::FastScriptArg final: WireData
+{
+    // IMPORTANT: maintain bitwise equivalence with managed struct V8.SplitProxy.V8Value.FastScriptArg
+};
+
+//-----------------------------------------------------------------------------
+
+static_assert(sizeof(V8Value::FastScriptArg) == sizeof(V8Value::WireData));
+
+//-----------------------------------------------------------------------------
+// V8Value::FastScriptResult
+//-----------------------------------------------------------------------------
+
+struct V8Value::FastScriptResult final: Decoded
+{
+    // IMPORTANT: maintain bitwise equivalence with managed struct V8.SplitProxy.V8Value.FastScriptResult
+};
+
+//-----------------------------------------------------------------------------
+
+static_assert(sizeof(V8Value::FastScriptResult) == sizeof(V8Value::Decoded));

@@ -1969,6 +1969,19 @@ NATIVE_ENTRY_POINT(void) V8Object_InvokeWithArrayBufferOrViewDataWithArg(const V
 
 //-----------------------------------------------------------------------------
 
+NATIVE_ENTRY_POINT(V8Value::Flags) V8Object_GetFlags(const V8ObjectHandle& handle) noexcept
+{
+    auto spV8ObjectHolder = handle.GetEntity();
+    if (!spV8ObjectHolder.IsEmpty())
+    {
+        return V8ObjectHelpers::GetFlags(spV8ObjectHolder);
+    }
+
+    return V8Value::Flags::None;
+}
+
+//-----------------------------------------------------------------------------
+
 NATIVE_ENTRY_POINT(void) V8DebugCallback_ConnectClient(const V8DebugCallbackHandle& handle) noexcept
 {
     SharedPtr<HostObjectUtil::DebugCallback> spCallback;

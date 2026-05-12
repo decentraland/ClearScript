@@ -5,7 +5,7 @@ You can now add ClearScript attributes to platform and external resources, and m
 
 # Background
 
-ClearScript offers several [attributes](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/attributes/) for controlling how .NET resources are exposed for scripting. They allow hosts to expose type members under substitute names, restrict or block script access to individual resources, and adjust marshaling behavior. An example is [`ScriptMemberAttribute`](https://microsoft.github.io/ClearScript/Reference/html/T_Microsoft_ClearScript_ScriptMemberAttribute.htm). 
+ClearScript offers several [attributes](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/attributes/) for controlling how .NET resources are exposed for scripting. They allow hosts to expose type members under substitute names, restrict or block script access to individual resources, and adjust marshaling behavior. An example is [`ScriptMemberAttribute`](https://clearscript.clearfoundry.net/Reference/html/T_Microsoft_ClearScript_ScriptMemberAttribute.htm). 
 
 .NET languages typically provide dedicated syntax for declaring attributes in source code, enabling fine-grained customization. However, that approach has some disadvantages:
 
@@ -15,7 +15,7 @@ ClearScript offers several [attributes](https://docs.microsoft.com/en-us/dotnet/
 
 # Custom Attribute Loaders
 
-ClearScript now funnels all attribute access through a global facility, the [_custom attribute loader_](https://microsoft.github.io/ClearScript/Reference/html/P_Microsoft_ClearScript_HostSettings_CustomAttributeLoader.htm). The host can override that facility to _virtualize_ attribute retrieval, gaining the ability to add new attributes to _any_ .NET resource – as well as modify or hide conventionally declared attributes – all by overriding a single class method.
+ClearScript now funnels all attribute access through a global facility, the [_custom attribute loader_](https://clearscript.clearfoundry.net/Reference/html/P_Microsoft_ClearScript_HostSettings_CustomAttributeLoader.htm). The host can override that facility to _virtualize_ attribute retrieval, gaining the ability to add new attributes to _any_ .NET resource – as well as modify or hide conventionally declared attributes – all by overriding a single class method.
 
 # Example: Expose .NET Type Members as Lower Camel Case
 

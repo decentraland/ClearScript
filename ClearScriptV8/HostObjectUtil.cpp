@@ -186,6 +186,22 @@ V8Value HostObjectUtil::GetAsyncEnumerator(void* pvObject)
 
 //-----------------------------------------------------------------------------
 
+void HostObjectUtil::Dispose(void* pvObject)
+{
+    V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(DisposeHostObject, pvObject);
+}
+
+//-----------------------------------------------------------------------------
+
+V8Value HostObjectUtil::AsyncDispose(void* pvObject)
+{
+    V8Value result(V8Value::Nonexistent);
+    V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(AsyncDisposeHostObject, pvObject, result);
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+
 void* HostObjectUtil::CreateV8ObjectCache()
 {
     return V8_SPLIT_PROXY_MANAGED_INVOKE_NOTHROW(void*, CreateV8ObjectCache);
@@ -451,5 +467,21 @@ V8Value FastHostObjectUtil::GetAsyncEnumerator(void* pvObject)
 {
     V8Value::FastResult result;
     V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(GetFastHostObjectAsyncEnumerator, pvObject, result);
+    return V8Value(result);
+}
+
+//-----------------------------------------------------------------------------
+
+void FastHostObjectUtil::Dispose(void* pvObject)
+{
+    V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(DisposeFastHostObject, pvObject);
+}
+
+//-----------------------------------------------------------------------------
+
+V8Value FastHostObjectUtil::AsyncDispose(void* pvObject)
+{
+    V8Value::FastResult result;
+    V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(AsyncDisposeFastHostObject, pvObject, result);
     return V8Value(result);
 }

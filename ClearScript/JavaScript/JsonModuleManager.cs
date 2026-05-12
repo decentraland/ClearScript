@@ -97,7 +97,7 @@ namespace Microsoft.ClearScript.JavaScript
                     if (!parsed)
                     {
                         parsed = true;
-                        result = ((ScriptObject)engine.Global.GetProperty("EngineInternal")).InvokeMethod("parseJson", json);
+                        result = engine.EngineInternal.InvokeMethod("parseJson", json);
                     }
 
                     return result;

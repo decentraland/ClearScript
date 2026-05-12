@@ -140,7 +140,6 @@ namespace Microsoft.ClearScript
             AddSystemDocument(identifier, new StringDocument(info, contents));
         }
 
-
         /// <summary>
         /// Adds the specified document as a system document to the configuration.
         /// </summary>

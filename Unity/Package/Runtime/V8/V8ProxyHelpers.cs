@@ -186,6 +186,26 @@ namespace Microsoft.ClearScript.V8
             return ((IDynamic)obj).GetProperty(SpecialMemberNames.NewAsyncEnum);
         }
 
+        public static void DisposeHostObject(IntPtr pObject)
+        {
+            DisposeHostObject(GetHostObject(pObject));
+        }
+
+        public static void DisposeHostObject(object obj)
+        {
+            ((IDisposableHostItem)obj).Dispose();
+        }
+
+        public static object AsyncDisposeHostObject(IntPtr pObject)
+        {
+            return AsyncDisposeHostObject(GetHostObject(pObject));
+        }
+
+        public static object AsyncDisposeHostObject(object obj)
+        {
+            return ((IDisposableHostItem)obj).DisposeAsync();
+        }
+
         #endregion
 
         #region fast host object access
@@ -318,6 +338,26 @@ namespace Microsoft.ClearScript.V8
         public static void GetFastHostObjectAsyncEnumerator(object obj, V8Value.FastResult.Ptr pResult)
         {
             ((V8FastHostItem)obj).CreateAsyncEnumerator(pResult);
+        }
+
+        public static void DisposeFastHostObject(IntPtr pObject)
+        {
+            DisposeFastHostObject(GetHostObject(pObject));
+        }
+
+        public static void DisposeFastHostObject(object obj)
+        {
+            ((V8FastHostItem)obj).Dispose();
+        }
+
+        public static void AsyncDisposeFastHostObject(IntPtr pObject, V8Value.FastResult.Ptr pResult)
+        {
+            AsyncDisposeFastHostObject(GetHostObject(pObject), pResult);
+        }
+
+        public static void AsyncDisposeFastHostObject(object obj, V8Value.FastResult.Ptr pResult)
+        {
+            ((V8FastHostItem)obj).DisposeAsync(pResult);
         }
 
         #endregion

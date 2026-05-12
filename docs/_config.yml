@@ -25,7 +25,7 @@ search_full_content: true
 author:
   name: ClearScript Library
   picture: /ClearScript.png
-  email: ClearScript@microsoft.com
+  email: clearscript@clearfoundry.net
   twitter: ClearScriptLib
   links:
   - title: Twitter
@@ -35,17 +35,17 @@ author:
     url: https://github.com/ClearScriptLib
     icon: fab fa-github-square
   - title: Email
-    url: mailto:ClearScript@microsoft.com
+    url: mailto:clearscript@clearfoundry.net
     icon: fas fa-envelope-square
 footer_links:
   - title: Twitter
     url: https://twitter.com/ClearScriptLib
     icon: fab fa-twitter-square
   - title: GitHub
-    url: https://github.com/microsoft/ClearScript
+    url: https://github.com/ClearFoundry/ClearScript
     icon: fab fa-github-square
   - title: Email
-    url: mailto:ClearScript@microsoft.com
+    url: mailto:clearscript@clearfoundry.net
     icon: fas fa-envelope-square
   - title: Feed
     url: feed.xml

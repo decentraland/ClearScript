@@ -24,6 +24,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
+using Microsoft.ClearScript.V8.FastProxy;
 
 namespace Microsoft.ClearScript.Test
 {
@@ -41,6 +42,7 @@ namespace Microsoft.ClearScript.Test
         [TestInitialize]
         public void TestInitialize()
         {
+            BaseTestInitialize();
             engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging);
         }
 
@@ -4619,10 +4621,10 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_DisableFloatNarrowing()
         {
-            engine.AddHostType("StringT", typeof(string));
-            Assert.AreEqual(123456.80.ToString("###,###.00"), engine.Evaluate("StringT.Format('{0:###,###.00}', 123456.75)"));
+            engine.Script.format = MiscHelpers.Forward(MiscHelpers.FormatInvariant);
+            Assert.AreEqual("123,456.80", engine.Evaluate("format(\"{0:###,###.00}\", 123456.75)"));
             engine.DisableFloatNarrowing = true;
-            Assert.AreEqual(123456.75.ToString("###,###.00"), engine.Evaluate("StringT.Format('{0:###,###.00}', 123456.75)"));
+            Assert.AreEqual("123,456.75", engine.Evaluate("format(\"{0:###,###.00}\", 123456.75)"));
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -5095,19 +5097,19 @@ namespace Microsoft.ClearScript.Test
 
             Assert.AreEqual((JavaScriptObjectKind.Unknown, JavaScriptObjectFlags.None), Inspect("{}"));
             Assert.AreEqual((JavaScriptObjectKind.Promise, JavaScriptObjectFlags.None), Inspect("(async function () {})()"));
-            Assert.AreEqual((JavaScriptObjectKind.Array, JavaScriptObjectFlags.None), Inspect("[]"));
+            Assert.AreEqual((JavaScriptObjectKind.Array, JavaScriptObjectFlags.Iterable), Inspect("[]"));
 
             Assert.AreEqual((JavaScriptObjectKind.Function, JavaScriptObjectFlags.None), Inspect("function () {}"));
             Assert.AreEqual((JavaScriptObjectKind.Function, JavaScriptObjectFlags.Async), Inspect("async function () {}"));
             Assert.AreEqual((JavaScriptObjectKind.Function, JavaScriptObjectFlags.Generator), Inspect("function* () {}"));
             Assert.AreEqual((JavaScriptObjectKind.Function, JavaScriptObjectFlags.Async | JavaScriptObjectFlags.Generator), Inspect("async function* () {}"));
 
-            Assert.AreEqual((JavaScriptObjectKind.Iterator, JavaScriptObjectFlags.None), Inspect("(function* () {})()"));
-            Assert.AreEqual((JavaScriptObjectKind.Iterator, JavaScriptObjectFlags.Async), Inspect("(async function* () {})()"));
+            Assert.AreEqual((JavaScriptObjectKind.Iterator, JavaScriptObjectFlags.Iterable | JavaScriptObjectFlags.Disposable), Inspect("(function* () {})()"));
+            Assert.AreEqual((JavaScriptObjectKind.Iterator, JavaScriptObjectFlags.Async | JavaScriptObjectFlags.AsyncIterable | JavaScriptObjectFlags.AsyncDisposable), Inspect("(async function* () {})()"));
 
             engine.Script.list = new List<int>();
-            Assert.AreEqual((JavaScriptObjectKind.Iterator, JavaScriptObjectFlags.None), Inspect("(list[Symbol.iterator])()"));
-            Assert.AreEqual((JavaScriptObjectKind.Iterator, JavaScriptObjectFlags.Async), Inspect("(list[Symbol.asyncIterator])()"));
+            Assert.AreEqual((JavaScriptObjectKind.Iterator, JavaScriptObjectFlags.Iterable | JavaScriptObjectFlags.Disposable), Inspect("(list[Symbol.iterator])()"));
+            Assert.AreEqual((JavaScriptObjectKind.Iterator, JavaScriptObjectFlags.Async | JavaScriptObjectFlags.AsyncIterable | JavaScriptObjectFlags.AsyncDisposable), Inspect("(list[Symbol.asyncIterator])()"));
 
             Assert.AreEqual((JavaScriptObjectKind.ArrayBuffer, JavaScriptObjectFlags.None), Inspect("new ArrayBuffer(256)"));
             Assert.AreEqual((JavaScriptObjectKind.ArrayBuffer, JavaScriptObjectFlags.Shared), Inspect("new SharedArrayBuffer(256)"));
@@ -5115,29 +5117,64 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual((JavaScriptObjectKind.DataView, JavaScriptObjectFlags.None), Inspect("new DataView(new ArrayBuffer(256))"));
             Assert.AreEqual((JavaScriptObjectKind.DataView, JavaScriptObjectFlags.Shared), Inspect("new DataView(new SharedArrayBuffer(256))"));
 
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new Uint8Array(new ArrayBuffer(256))"));
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new Uint8ClampedArray(new ArrayBuffer(256))"));
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new Int8Array(new ArrayBuffer(256))"));
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new Uint16Array(new ArrayBuffer(256))"));
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new Int16Array(new ArrayBuffer(256))"));
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new Uint32Array(new ArrayBuffer(256))"));
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new Int32Array(new ArrayBuffer(256))"));
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new BigUint64Array(new ArrayBuffer(256))"));
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new BigInt64Array(new ArrayBuffer(256))"));
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new Float32Array(new ArrayBuffer(256))"));
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new Float64Array(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Iterable), Inspect("new Uint8Array(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Iterable), Inspect("new Uint8ClampedArray(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Iterable), Inspect("new Int8Array(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Iterable), Inspect("new Uint16Array(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Iterable), Inspect("new Int16Array(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Iterable), Inspect("new Uint32Array(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Iterable), Inspect("new Int32Array(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Iterable), Inspect("new BigUint64Array(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Iterable), Inspect("new BigInt64Array(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Iterable), Inspect("new Float32Array(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Iterable), Inspect("new Float64Array(new ArrayBuffer(256))"));
 
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new Uint8Array(new SharedArrayBuffer(256))"));
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new Uint8ClampedArray(new SharedArrayBuffer(256))"));
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new Int8Array(new SharedArrayBuffer(256))"));
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new Uint16Array(new SharedArrayBuffer(256))"));
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new Int16Array(new SharedArrayBuffer(256))"));
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new Uint32Array(new SharedArrayBuffer(256))"));
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new Int32Array(new SharedArrayBuffer(256))"));
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new BigUint64Array(new SharedArrayBuffer(256))"));
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new BigInt64Array(new SharedArrayBuffer(256))"));
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new Float32Array(new SharedArrayBuffer(256))"));
-            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new Float64Array(new SharedArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared | JavaScriptObjectFlags.Iterable), Inspect("new Uint8Array(new SharedArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared | JavaScriptObjectFlags.Iterable), Inspect("new Uint8ClampedArray(new SharedArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared | JavaScriptObjectFlags.Iterable), Inspect("new Int8Array(new SharedArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared | JavaScriptObjectFlags.Iterable), Inspect("new Uint16Array(new SharedArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared | JavaScriptObjectFlags.Iterable), Inspect("new Int16Array(new SharedArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared | JavaScriptObjectFlags.Iterable), Inspect("new Uint32Array(new SharedArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared | JavaScriptObjectFlags.Iterable), Inspect("new Int32Array(new SharedArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared | JavaScriptObjectFlags.Iterable), Inspect("new BigUint64Array(new SharedArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared | JavaScriptObjectFlags.Iterable), Inspect("new BigInt64Array(new SharedArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared | JavaScriptObjectFlags.Iterable), Inspect("new Float32Array(new SharedArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared | JavaScriptObjectFlags.Iterable), Inspect("new Float64Array(new SharedArrayBuffer(256))"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_JavaScriptObjectFlags_Update()
+        {
+            var obj = (IJavaScriptObject)engine.Evaluate("obj = {}");
+            Assert.AreEqual(JavaScriptObjectFlags.None, obj.Flags);
+
+            engine.Execute("obj[Symbol.dispose] = () => {}");
+            obj.Update();
+            Assert.AreEqual(JavaScriptObjectFlags.Disposable, obj.Flags);
+
+            engine.Execute("obj[Symbol.asyncDispose] = () => Promise.resolve()");
+            obj.Update();
+            Assert.AreEqual(JavaScriptObjectFlags.Disposable | JavaScriptObjectFlags.AsyncDisposable, obj.Flags);
+
+            var source = new TaskCompletionSource<int>();
+            engine.Script.promise = source.Task.ToPromise(engine);
+
+            obj = (IJavaScriptObject)engine.Evaluate("(async () => await promise)()");
+            Assert.AreEqual(JavaScriptObjectFlags.Pending, obj.Flags);
+
+            source.SetResult(123);
+            obj.Update();
+            Assert.AreEqual(JavaScriptObjectFlags.None, obj.Flags);
+
+            source = new TaskCompletionSource<int>();
+            engine.Script.promise = source.Task.ToPromise(engine);
+
+            obj = (IJavaScriptObject)engine.Evaluate("(async () => await promise)()");
+            Assert.AreEqual(JavaScriptObjectFlags.Pending, obj.Flags);
+
+            source.SetException(new InvalidOperationException());
+            obj.Update();
+            Assert.AreEqual(JavaScriptObjectFlags.Rejected, obj.Flags);
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -5840,6 +5877,170 @@ namespace Microsoft.ClearScript.Test
             Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("array[3][2] === array")));
         }
 
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ExplicitResourceManagement_Disposable()
+        {
+            var test = new DisposableTest();
+            engine.Script.test = test;
+            Assert.IsFalse(test.Disposed);
+            engine.Execute("(function() { using disposable = test; })()");
+            Assert.IsTrue(test.Disposed);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public async Task V8ScriptEngine_ExplicitResourceManagement_AsyncDisposable()
+        {
+            var test = new AsyncDisposableTest();
+            engine.Script.test = test;
+            Assert.IsFalse(test.Disposed);
+            await engine.Evaluate("(async function() { await using disposable = test; })()").ToTask();
+            Assert.IsTrue(test.Disposed);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ExplicitResourceManagement_FastDisposable()
+        {
+            var test = new FastDisposableTest();
+            engine.Script.test = test;
+            Assert.IsFalse(test.Disposed);
+            Assert.AreEqual(123, engine.Evaluate("test.foo"));
+            engine.Execute("(function() { using disposable = test; })()");
+            Assert.IsTrue(test.Disposed);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public async Task V8ScriptEngine_ExplicitResourceManagement_FastAsyncDisposable()
+        {
+            var test = new FastAsyncDisposableTest();
+            engine.Script.test = test;
+            Assert.IsFalse(test.Disposed);
+            Assert.AreEqual(456, engine.Evaluate("test.foo"));
+            await engine.Evaluate("(async function() { await using disposable = test; })()").ToTask();
+            Assert.IsTrue(test.Disposed);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ExplicitResourceManagement_ScriptObject_Disposable()
+        {
+            var test = (IDisposable)engine.Evaluate("({ value: 123, [Symbol.dispose]: function() { globalThis.result = this.value; } })");
+            test.Dispose();
+            Assert.AreEqual(123, engine.Global["result"]);
+
+            test = (IDisposable)engine.Evaluate("({ value: 456, [Symbol.dispose]: 'foo' })");
+            test.Dispose();
+            Assert.AreEqual(123, engine.Global["result"]);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public async Task V8ScriptEngine_ExplicitResourceManagement_ScriptObject_AsyncDisposable()
+        {
+            var test = (IAsyncDisposable)engine.Evaluate("({ value: 123, [Symbol.asyncDispose]: async function() { globalThis.result = this.value; } })");
+            await test.DisposeAsync();
+            Assert.AreEqual(123, engine.Global["result"]);
+
+            test = (IAsyncDisposable)engine.Evaluate("({ value: 456, [Symbol.dispose]: function() { globalThis.result = this.value + 1; } })");
+            await test.DisposeAsync();
+            Assert.AreEqual(457, engine.Global["result"]);
+
+            test = (IAsyncDisposable)engine.Evaluate("({ value: 789, [Symbol.asyncDispose]: async function() { globalThis.result = this.value; }, [Symbol.dispose]: function() { globalThis.result = this.value + 1; } })");
+            await test.DisposeAsync();
+            Assert.AreEqual(789, engine.Global["result"]);
+
+            test = (IAsyncDisposable)engine.Evaluate("({ value: 987, [Symbol.asyncDispose]: 'bar' })");
+            await test.DisposeAsync();
+            Assert.AreEqual(789, engine.Global["result"]);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_MarshalEnumAsUnderlyingType()
+        {
+            engine.AddHostObject("host", new HostFunctions());
+            engine.AddHostType(typeof(Dog));
+            engine.AddHostType(typeof(Dogs));
+
+            var dog = Dog.Mastiff;
+            var dogs = Dogs.Bulldog | Dogs.Rottweiler;
+            engine.Script.test = new EnumAsUnderlyingTypeTest { Dog = dog, Dogs = dogs };
+
+            Assert.AreEqual(Dog.Chihuahua, engine.Evaluate("Dog.Chihuahua"));
+            Assert.AreEqual(Dogs.Dalmatian | Dogs.Greyhound, engine.Evaluate("host.flags(Dogs.Dalmatian, Dogs.Greyhound)"));
+            Assert.AreEqual(dog, engine.Evaluate("test.Dog"));
+            Assert.AreEqual(dogs, engine.Evaluate("test.Dogs"));
+            Assert.AreEqual(dog.ToString(), engine.Evaluate("test.GetName('', test.Dog)"));
+            Assert.AreEqual(dog.ToString(), engine.Evaluate("test.GetName('', test.Dog, 0)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("test.GetName('', test.Dog, '')"));
+            Assert.AreEqual(dogs.ToString(), engine.Evaluate("test.GetNames('', test.Dogs)"));
+            Assert.AreEqual(dogs.ToString(), engine.Evaluate("test.GetNames('', test.Dogs, 0)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("test.GetNames('', test.Dogs, '')"));
+
+            engine.MarshalEnumAsUnderlyingType = true;
+            Assert.AreEqual(Dog.Chihuahua.ToUnderlyingType(), engine.Evaluate("Dog.Chihuahua"));
+            Assert.AreEqual((Dogs.Dalmatian | Dogs.Greyhound).ToUnderlyingType(), engine.Evaluate("Dogs.Dalmatian | Dogs.Greyhound"));
+            Assert.AreEqual(dog.ToUnderlyingType(), engine.Evaluate("test.Dog"));
+            Assert.AreEqual(dogs.ToUnderlyingType(), engine.Evaluate("test.Dogs"));
+            Assert.AreEqual(dog.ToString().ToLowerInvariant(), engine.Evaluate("test.GetName('', test.Dog)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("test.GetName('', test.Dog, 0)"));
+            Assert.AreEqual(dog.ToString().ToLowerInvariant(), engine.Evaluate("test.GetName('', test.Dog, '')"));
+            Assert.AreEqual(dogs.ToString().ToLowerInvariant(), engine.Evaluate("test.GetNames('', test.Dogs)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("test.GetNames('', test.Dogs, 0)"));
+            Assert.AreEqual(dogs.ToString().ToLowerInvariant(), engine.Evaluate("test.GetNames('', test.Dogs, '')"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AcceptEnumAsUnderlyingType()
+        {
+            engine.AddHostObject("host", new HostFunctions());
+            engine.AddHostType(typeof(Dog));
+            engine.AddHostType(typeof(Dogs));
+            
+            engine.Script.test = new EnumAsUnderlyingTypeTest();
+            engine.UseReflectionBindFallback = true;
+
+            var dog = Dog.Mastiff;
+            var dog1 = Dogs.Bulldog;
+            var dog2 = Dogs.Rottweiler;
+            var dogs = dog1 | dog2;
+            
+            Assert.AreEqual(dog, engine.Evaluate($"test.Dog = Dog.{dog}"));
+            Assert.AreEqual(dogs, engine.Evaluate($"test.Dogs = host.flags(Dogs.{dog1}, Dogs.{dog2})"));
+            Assert.AreEqual(dog.ToString(), engine.Evaluate("test.GetName('', test.Dog)"));
+            Assert.AreEqual(dog.ToString(), engine.Evaluate("test.GetName('', test.Dog, 0)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("test.GetName('', test.Dog, '')"));
+            Assert.AreEqual(dogs.ToString(), engine.Evaluate("test.GetNames('', test.Dogs)"));
+            Assert.AreEqual(dogs.ToString(), engine.Evaluate("test.GetNames('', test.Dogs, 0)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("test.GetNames('', test.Dogs, '')"));
+
+            engine.MarshalEnumAsUnderlyingType = true;
+            TestUtil.AssertException<ArgumentException>(() => engine.Evaluate($"test.Dog = Dog.{dog}"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Evaluate($"test.Dogs = Dogs.{dog1} | Dogs.{dog2}"));
+            Assert.AreEqual(dog.ToString().ToLowerInvariant(), engine.Evaluate("test.GetName('', test.Dog)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("test.GetName('', test.Dog, 0)"));
+            Assert.AreEqual(dog.ToString().ToLowerInvariant(), engine.Evaluate("test.GetName('', test.Dog, '')"));
+            Assert.AreEqual(dogs.ToString().ToLowerInvariant(), engine.Evaluate("test.GetNames('', test.Dogs)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("test.GetNames('', test.Dogs, 0)"));
+            Assert.AreEqual(dogs.ToString().ToLowerInvariant(), engine.Evaluate("test.GetNames('', test.Dogs, '')"));
+
+            engine.AcceptEnumAsUnderlyingType = true;
+            Assert.AreEqual(dog.ToUnderlyingType(), engine.Evaluate($"test.Dog = Dog.{dog}"));
+            Assert.AreEqual(dogs.ToUnderlyingType(), engine.Evaluate($"test.Dogs = Dogs.{dog1} | Dogs.{dog2}"));
+            Assert.AreEqual(dog.ToString().ToLowerInvariant(), engine.Evaluate("test.GetName('', test.Dog)"));
+            Assert.AreEqual(dog.ToString(), engine.Evaluate("test.GetName('', test.Dog, 0)"));
+            Assert.AreEqual(dog.ToString().ToLowerInvariant(), engine.Evaluate("test.GetName('', test.Dog, '')"));
+            Assert.AreEqual(dogs.ToString().ToLowerInvariant(), engine.Evaluate("test.GetNames('', test.Dogs)"));
+            Assert.AreEqual(dogs.ToString(), engine.Evaluate("test.GetNames('', test.Dogs, 0)"));
+            Assert.AreEqual(dogs.ToString().ToLowerInvariant(), engine.Evaluate("test.GetNames('', test.Dogs, '')"));
+
+            engine.MarshalEnumAsUnderlyingType = false;
+            Assert.AreEqual(dog, engine.Evaluate($"test.Dog = Dog.{dog}"));
+            Assert.AreEqual(dogs, engine.Evaluate($"test.Dogs = host.flags(Dogs.{dog1}, Dogs.{dog2})"));
+            Assert.AreEqual(dog.ToString(), engine.Evaluate("test.GetName('', test.Dog)"));
+            Assert.AreEqual(dog.ToString(), engine.Evaluate("test.GetName('', test.Dog, 0)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("test.GetName('', test.Dog, '')"));
+            Assert.AreEqual(dogs.ToString(), engine.Evaluate("test.GetNames('', test.Dogs)"));
+            Assert.AreEqual(dogs.ToString(), engine.Evaluate("test.GetNames('', test.Dogs, 0)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("test.GetNames('', test.Dogs, '')"));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -6245,6 +6446,115 @@ namespace Microsoft.ClearScript.Test
                 {
                     callback(state);
                 }
+            }
+        }
+
+        public class DisposableTest : IDisposable
+        {
+            public bool Disposed { get; private set; }
+
+            public void Dispose() => Disposed = true;
+        }
+
+        public class AsyncDisposableTest : IAsyncDisposable
+        {
+            public bool Disposed { get; private set; }
+
+            public ValueTask DisposeAsync()
+            {
+                Disposed = true;
+                return default;
+            }
+        }
+
+        public class FastDisposableTest : V8FastHostObject<FastDisposableTest>, IDisposable
+        {
+            static FastDisposableTest()
+            {
+                Configure(static configuration =>
+                {
+                    configuration.AddPropertyGetter("foo", (FastDisposableTest _, in V8FastResult value) => value.Set(123));
+                });
+            }
+
+            public bool Disposed { get; private set; }
+
+            public void Dispose() => Disposed = true;
+        }
+
+        public class FastAsyncDisposableTest : V8FastHostObject<FastAsyncDisposableTest>, IAsyncDisposable
+        {
+            static FastAsyncDisposableTest()
+            {
+                Configure(static configuration =>
+                {
+                    configuration.AddPropertyGetter("foo", (FastAsyncDisposableTest _, in V8FastResult value) => value.Set(456));
+                });
+            }
+
+            public bool Disposed { get; private set; }
+
+            public ValueTask DisposeAsync()
+            {
+                Disposed = true;
+                return default;
+            }
+        }
+
+        public enum Dog
+        {
+            Beagle,
+            Boxer,
+            Dalmatian,
+            Greyhound,
+            Whippet,
+            Bulldog,
+            Rottweiler,
+            Doberman,
+            Mastiff,
+            Chihuahua
+        }
+
+        [Flags]
+        public enum Dogs
+        {
+            None = 0,
+            Beagle = 1 << Dog.Beagle,
+            Boxer = 1 << Dog.Boxer,
+            Dalmatian = 1 << Dog.Dalmatian,
+            Greyhound = 1 << Dog.Greyhound,
+            Whippet = 1 << Dog.Whippet,
+            Bulldog = 1 << Dog.Bulldog,
+            Rottweiler = 1 << Dog.Rottweiler,
+            Doberman = 1 << Dog.Doberman,
+            Mastiff = 1 << Dog.Mastiff,
+            Chihuahua = 1 << Dog.Chihuahua
+        }
+
+        public class EnumAsUnderlyingTypeTest
+        {
+            public Dog Dog { get; set; }
+            
+            public Dogs Dogs { get; set; }
+
+            public string GetName(string foo, Dog dog = Dog.Rottweiler, double bar = 123)
+            {
+                return dog.ToString();
+            }
+
+            public string GetName(string foo, int dog = 8, string bar = "bar")
+            {
+                return Enum.ToObject(typeof(Dog), dog).ToString().ToLowerInvariant();
+            }
+
+            public string GetNames(string foo, Dogs dogs = Dogs.Dalmatian | Dogs.Doberman, double bar = 123)
+            {
+                return dogs.ToString();
+            }
+
+            public string GetNames(string foo, int dogs = 10, string bar = "bar")
+            {
+                return Enum.ToObject(typeof(Dogs), dogs).ToString().ToLowerInvariant();
             }
         }
 

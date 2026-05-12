@@ -27,11 +27,11 @@ If you accidentally have [the Decentraland client](https://github.com/decentrala
 
 # Documentation
 
-* [Main Site / Blog](https://microsoft.github.io/ClearScript/)
-* [Examples](https://microsoft.github.io/ClearScript/Examples/Examples.html)
-* [Tutorial](https://microsoft.github.io/ClearScript/Tutorial/FAQtorial.html)
-* [API reference](https://microsoft.github.io/ClearScript/Reference/index.html)
-* [Building, integrating, and deploying ClearScript](https://microsoft.github.io/ClearScript/Details/Build.html)
+* [Main Site / Blog](https://clearscript.clearfoundry.net/)
+* [Examples](https://clearscript.clearfoundry.net/Examples/Examples.html)
+* [Tutorial](https://clearscript.clearfoundry.net/Tutorial/FAQtorial.html)
+* [API reference](https://clearscript.clearfoundry.net/Reference/index.html)
+* [Building, integrating, and deploying ClearScript](https://clearscript.clearfoundry.net/Details/Build.html)
 
 # Acknowledgments
 

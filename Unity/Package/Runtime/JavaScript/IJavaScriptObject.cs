@@ -17,5 +17,10 @@ namespace Microsoft.ClearScript.JavaScript
         /// Gets the JavaScript object's attributes.
         /// </summary>
         JavaScriptObjectFlags Flags { get; }
+
+        /// <summary>
+        /// Updates the JavaScript object's attributes.
+        /// </summary>
+        void Update();
     }
 }

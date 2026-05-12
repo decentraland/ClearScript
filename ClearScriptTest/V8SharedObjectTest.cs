@@ -22,6 +22,7 @@ namespace Microsoft.ClearScript.Test
         [TestInitialize]
         public void TestInitialize()
         {
+            BaseTestInitialize();
             otherEngine = new V8ScriptEngine();
             otherEngine.Execute(@"
                 arrayBuffer = new SharedArrayBuffer(1024);

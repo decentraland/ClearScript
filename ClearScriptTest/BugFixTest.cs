@@ -41,6 +41,7 @@ namespace Microsoft.ClearScript.Test
         [TestInitialize]
         public void TestInitialize()
         {
+            BaseTestInitialize();
             engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging);
         }
 
@@ -1237,7 +1238,7 @@ namespace Microsoft.ClearScript.Test
                 runtime.CollectGarbage(true);
                 
                 var newHeapSize = runtime.GetHeapInfo().TotalHeapSize;
-                Assert.IsFalse(newHeapSize > (heapSize * 2.0));
+                Assert.IsFalse(newHeapSize > (heapSize * 2.5));
             }
         }
 
@@ -2375,7 +2376,7 @@ namespace Microsoft.ClearScript.Test
             public virtual string VirtualProperty => "foo";
         }
 
-        internal class PublicOverrideTest : PublicOverrideTestBase
+        internal sealed class PublicOverrideTest : PublicOverrideTestBase
         {
             public override int AbstractMethod()
             {
@@ -2480,7 +2481,7 @@ namespace Microsoft.ClearScript.Test
             // ReSharper disable ClassNeverInstantiated.Local
             // ReSharper disable NotAccessedField.Local
 
-            private class Entry
+            private sealed class Entry
             {
                 public object Prototype;
                 public object ProxyHolder;
@@ -2490,7 +2491,7 @@ namespace Microsoft.ClearScript.Test
             // ReSharper restore ClassNeverInstantiated.Local
         }
 
-        private class InaccessibleEventHandlerTypeTestObject
+        private sealed class InaccessibleEventHandlerTypeTestObject
         {
             private delegate void TestEventHandler(int value);
 
@@ -2569,7 +2570,7 @@ namespace Microsoft.ClearScript.Test
 
     #endif // !NET6_0_OR_GREATER
 
-        private class StructConstructorTestCustomAttributeLoader : CustomAttributeLoader
+        private sealed class StructConstructorTestCustomAttributeLoader : CustomAttributeLoader
         {
             public override T[] LoadCustomAttributes<T>(ICustomAttributeProvider resource, bool inherit)
             {

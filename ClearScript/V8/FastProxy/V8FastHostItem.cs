@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.V8.SplitProxy;
@@ -239,7 +240,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
                             throw new NotSupportedException("The object does not support constructor invocation");
                         }
 
-                        var args = new V8FastArgs(ctx.self.Engine, ctx.pArgs.ToSpan(ctx.argCount), V8FastArgKind.MethodArg);
+                        using var args = new V8FastArgs(ctx.self.Engine, ctx.pArgs.ToSpan(ctx.argCount), V8FastArgKind.MethodArg);
 
                         methodOperations.Invoke(args, result);
                         if (!result.IsSet)
@@ -249,7 +250,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
                     }
                     else if (target.Operations is IV8FastHostFunctionOperations functionOperations)
                     {
-                        var args = new V8FastArgs(ctx.self.Engine, ctx.pArgs.ToSpan(ctx.argCount), V8FastArgKind.FunctionArg);
+                        using var args = new V8FastArgs(ctx.self.Engine, ctx.pArgs.ToSpan(ctx.argCount), V8FastArgKind.FunctionArg);
 
                         functionOperations.Invoke(ctx.asConstructor, args, result);
                         if (!result.IsSet)
@@ -309,6 +310,42 @@ namespace Microsoft.ClearScript.V8.FastProxy
                     }
 
                     throw new NotSupportedException("The object is not async-enumerable");
+                },
+                (self: this, pResult)
+            );
+        }
+
+        public void Dispose()
+        {
+            Engine.HostInvoke(
+                static self =>
+                {
+                    // ReSharper disable once SuspiciousTypeConversion.Global
+                    if (self.Target is IDisposable disposable)
+                    {
+                        disposable.Dispose();
+                    }
+                },
+                this
+            );
+        }
+
+        public void DisposeAsync(V8Value.FastResult.Ptr pResult)
+        {
+            Engine.HostInvoke(
+                static ctx =>
+                {
+                    var result = new V8FastResult(ctx.self.Engine, ctx.self.Flags, ctx.pResult);
+
+                    // ReSharper disable once SuspiciousTypeConversion.Global
+                    if (ctx.self.Target is IAsyncDisposable asyncDisposable)
+                    {
+                        result.Set(asyncDisposable.DisposeAsync().ToPromise(ctx.self.Engine));
+                    }
+                    else
+                    {
+                        result.Set(Task.CompletedTask.ToPromise(ctx.self.Engine));
+                    }
                 },
                 (self: this, pResult)
             );

@@ -38,6 +38,8 @@ public:
     void GetArrayBufferOrViewInfo(V8Value& arrayBuffer, size_t& offset, size_t& size, size_t& length) const;
     void InvokeWithArrayBufferOrViewData(V8ObjectHelpers::ArrayBufferOrViewDataCallback* pCallback, void* pvArg) const;
 
+    V8Value::Flags GetFlags() const;
+
     ~V8ObjectHolderImpl();
 
 private:

@@ -1,6 +1,6 @@
 {
     "name": "org.decentraland.clearscript",
-    "version": "7.5.0",
+    "version": "7.5.1",
     "description": "This is a fork of Microsoft's ClearScript library, which itself is a wrapper around Google's V8 JavaScript engine.",
     "displayName": "ClearScript",
     "unity": "2022.3",

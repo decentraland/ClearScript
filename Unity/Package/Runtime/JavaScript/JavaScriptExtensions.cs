@@ -236,8 +236,7 @@ namespace Microsoft.ClearScript.JavaScript
             {
                 if (scriptObject.Engine is IJavaScriptEngine javaScriptEngine && (javaScriptEngine.BaseLanguageVersion >= 6))
                 {
-                    var engineInternal = (ScriptObject)javaScriptEngine.Global["EngineInternal"];
-                    if (engineInternal.InvokeMethod("getIterator", scriptObject) is ScriptObject iterator)
+                    if (scriptObject.Engine.EngineInternal.InvokeMethod("getIterator", scriptObject) is ScriptObject iterator)
                     {
                         while (iterator.InvokeMethod("next") is ScriptObject result && !Equals(result["done"], true))
                         {
@@ -280,7 +279,7 @@ namespace Microsoft.ClearScript.JavaScript
             {
                 if (scriptObject.Engine is IJavaScriptEngine javaScriptEngine && (javaScriptEngine.BaseLanguageVersion >= 6))
                 {
-                    var engineInternal = (ScriptObject)javaScriptEngine.Global["EngineInternal"];
+                    var engineInternal = scriptObject.Engine.EngineInternal;
                     if (engineInternal.InvokeMethod("getAsyncIterator", scriptObject) is ScriptObject asyncIterator)
                     {
                         while (await asyncIterator.InvokeMethod("next").ToTask().ConfigureAwait(false) is ScriptObject result && !Equals(result["done"], true))

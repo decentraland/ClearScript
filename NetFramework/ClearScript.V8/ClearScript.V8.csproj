@@ -4,7 +4,7 @@
         <TargetFrameworks>net462;net471</TargetFrameworks>
         <RootNamespace>Microsoft.ClearScript.V8</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-        <LangVersion>9.0</LangVersion>
+        <LangVersion>10.0</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -50,6 +50,7 @@
         <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastHostMethodOperations.cs" Link="V8\FastProxy\IV8FastHostMethodOperations.cs" />
         <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastHostObject.cs" Link="V8\FastProxy\IV8FastHostObject.cs" />
         <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastHostObjectOperations.cs" Link="V8\FastProxy\IV8FastHostObjectOperations.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastJavaScriptObject.cs" Link="V8\FastProxy\IV8FastJavaScriptObject.cs" />
         <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastArg.cs" Link="V8\FastProxy\V8FastArg.cs" />
         <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastArgImpl.cs" Link="V8\FastProxy\V8FastArgImpl.cs" />
         <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastArgKind.cs" Link="V8\FastProxy\V8FastArgKind.cs" />

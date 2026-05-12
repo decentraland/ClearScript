@@ -30,6 +30,7 @@ namespace Microsoft.ClearScript.Test
         [TestInitialize]
         public void TestInitialize()
         {
+            BaseTestInitialize();
             engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging);
             PrepareEngine();
         }
@@ -2430,7 +2431,7 @@ namespace Microsoft.ClearScript.Test
             public static string GetTypeName<T>(T _) => typeof(T).Name;
         }
 
-        private sealed class TestObject : IV8FastHostObject
+        private sealed class TestObject : IV8FastHostObject, IDisposable, IAsyncDisposable
         {
             public delegate void RawGetProperty(in V8FastResult value);
 
@@ -2445,6 +2446,18 @@ namespace Microsoft.ClearScript.Test
             private static readonly Operations operations = new();
 
             IV8FastHostObjectOperations IV8FastHostObject.Operations => operations;
+
+            #endregion
+
+            #region IDisposable implementation
+
+            void IDisposable.Dispose() {}
+
+            #endregion
+
+            #region IAsyncDisposable implementation
+
+            ValueTask IAsyncDisposable.DisposeAsync() => new(Task.CompletedTask);
 
             #endregion
 

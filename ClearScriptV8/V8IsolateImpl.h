@@ -145,6 +145,7 @@ public:
 
     V8IsolateImpl(const StdString& name, const v8::ResourceConstraints* pConstraints, const Options& options);
 
+    static V8GlobalFlags GetGlobalFlags();
     static V8IsolateImpl* GetInstanceFromIsolate(v8::Isolate* pIsolate);
     static size_t GetInstanceCount();
 
@@ -190,6 +191,16 @@ public:
     v8::Local<v8::Symbol> GetAsyncIteratorSymbol()
     {
         return v8::Symbol::GetAsyncIterator(m_upIsolate.get());
+    }
+
+    v8::Local<v8::Symbol> GetDisposeSymbol()
+    {
+        return v8::Symbol::GetDispose(m_upIsolate.get());
+    }
+
+    v8::Local<v8::Symbol> GetAsyncDisposeSymbol()
+    {
+        return v8::Symbol::GetAsyncDispose(m_upIsolate.get());
     }
 
     v8::Local<v8::Symbol> GetToStringTagSymbol()
@@ -275,7 +286,7 @@ public:
 
     v8::Local<v8::External> CreateExternal(void* pvValue)
     {
-        return v8::External::New(m_upIsolate.get(), pvValue);
+        return v8::External::New(m_upIsolate.get(), pvValue, v8::kExternalPointerTypeTagDefault);
     }
 
     v8::Local<v8::ObjectTemplate> CreateObjectTemplate()
@@ -426,14 +437,9 @@ public:
         END_MUTEX_SCOPE
     }
 
-    int ContextDisposedNotification()
+    void ContextDisposedNotification()
     {
-        return m_upIsolate->ContextDisposedNotification();
-    }
-
-    void RequestGarbageCollectionForTesting(v8::Isolate::GarbageCollectionType type)
-    {
-        m_upIsolate->RequestGarbageCollectionForTesting(type);
+        m_upIsolate->ContextDisposedNotification(v8::ContextDependants::kSomeDependants);
     }
 
     void ClearCachesForTesting()
@@ -646,6 +652,7 @@ private:
 
     void SetUpHeapWatchTimer(bool forceMinInterval);
     void CheckHeapSize(const std::optional<size_t>& optMaxHeapSize, bool timerTriggered);
+    void CollectGarbageInternal(bool exhaustive);
 
     static void OnBeforeCallEntered(v8::Isolate* pIsolate);
     void OnBeforeCallEntered();
