@@ -1,0 +1,90 @@
+name: Sysroot probe
+on: push
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+    - name: Fetch V8's Chromium build directory
+      run: |
+        mkdir -p V8/build/v8/build
+        cd V8/build/v8/build
+        git init -q
+        git fetch -q --depth 1 https://chromium.googlesource.com/chromium/src/build 97e2bd1131c90d68561f34776219613b9dfc13ba
+        git checkout -q FETCH_HEAD
+    - name: Install sysroots and static libraries
+      working-directory: V8/build/v8
+      run: |
+        function fail { echo "*** THE PREVIOUS STEP FAILED ***"; exit 1; }
+        source <(sed -n '/^function install_sysroot_libs/,/^}/p' ../../../Unix/V8Update.sh)
+        for cpu in x64 arm64; do
+          build/linux/sysroot_scripts/install-sysroot.py --arch=$cpu
+          install_sysroot_libs $cpu
+          install_sysroot_libs $cpu
+        done
+        ls -la build/linux/debian_bullseye_*-sysroot/usr/lib/gcc/*/10/
+    - name: Link probe libraries
+      run: |
+        cat > probe.cpp <<'EOF'
+        #include <mutex>
+        #include <random>
+        #include <sstream>
+        #include <stdexcept>
+        #include <string>
+        #include <thread>
+
+        static std::mutex mutex;
+
+        static int Work(int value)
+        {
+            if (value < 0) throw std::runtime_error("negative");
+            std::ostringstream stream;
+            stream << value;
+            return static_cast<int>(stream.str().size());
+        }
+
+        extern "C" int Probe(int value)
+        {
+            std::random_device device;
+            int result = 0;
+            std::thread thread([&] {
+                std::lock_guard<std::mutex> lock(mutex);
+                try { result = Work(value * 1000 + static_cast<int>(device() % 2)); }
+                catch (const std::exception&) { result = -1; }
+            });
+            thread.join();
+            return result;
+        }
+        EOF
+        cat > loader.c <<'EOF'
+        #include <dlfcn.h>
+        #include <stdio.h>
+
+        int main(int argc, char** argv)
+        {
+            void* lib = dlopen(argv[1], RTLD_NOW);
+            if (!lib) { printf("dlopen failed: %s\n", dlerror()); return 1; }
+            int (*probe)(int) = (int (*)(int))dlsym(lib, "Probe");
+            printf("Probe(5) = %d, Probe(-5) = %d\n", probe(5), probe(-5));
+            return 0;
+        }
+        EOF
+        ld.lld --version || (sudo apt-get update && sudo apt-get install -y lld)
+        clang++ --version | head -1
+        for cpu in x64 arm64; do
+          case $cpu in x64) arch=amd64 triple=x86_64-linux-gnu;; arm64) arch=arm64 triple=aarch64-linux-gnu;; esac
+          sysroot=V8/build/v8/build/linux/debian_bullseye_$arch-sysroot
+          clang++ --target=$triple --sysroot=$sysroot -v -x c++ /dev/null -fsyntax-only 2>&1 | grep "Selected GCC"
+          clang++ --target=$triple -std=c++20 -fvisibility=default -fPIC -fno-rtti -O3 --sysroot=$sysroot -s -static-libstdc++ -static-libgcc -ldl -lrt --no-undefined -fuse-ld=lld --shared probe.cpp -o probe-$cpu.so -pthread
+          clang --target=$triple --sysroot=$sysroot -fuse-ld=lld loader.c -o loader-$cpu -ldl
+          echo "probe-$cpu.so requires $(readelf -V -W probe-$cpu.so | grep -oE 'GLIBC_[0-9.]+' | sort -uV | tail -1); NEEDED: $(readelf -d probe-$cpu.so | grep NEEDED | awk '{print $5}' | tr '\n' ' ')" | tee -a "$GITHUB_STEP_SUMMARY"
+        done
+    - name: Load x64 probe on glibc 2.31
+      run: docker run --rm -v "$PWD:/w" -w /w ubuntu:20.04 sh -c 'ldd --version | head -1 && ./loader-x64 ./probe-x64.so' | tee -a "$GITHUB_STEP_SUMMARY"
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+      with:
+        platforms: arm64
+    - name: Load arm64 probe on glibc 2.31
+      run: docker run --rm --platform linux/arm64 -v "$PWD:/w" -w /w ubuntu:20.04 sh -c 'ldd --version | head -1 && ./loader-arm64 ./probe-arm64.so' | tee -a "$GITHUB_STEP_SUMMARY"
