@@ -41,7 +41,7 @@ jobs:
           bin\Release\netstandard1.0\ClearScript.V8.ICUData.pdb
   linux:
     name: Linux binaries
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - name: Checkout
       uses: actions/checkout@v6
@@ -58,6 +58,11 @@ jobs:
       run: |
         for f in V8/build/v8/apply-cherry-picks.log V8/build/v8/apply-patch.log V8/build/v8/gn-x64-Release.log V8/build/v8/build-x64-Release.log V8/build/v8/gn-arm64-Release.log V8/build/v8/build-arm64-Release.log; do
           if [ -f "$f" ]; then echo "===== $f ====="; cat "$f"; fi
+        done
+    - name: Report glibc requirements
+      run: |
+        for f in bin/Release/Unix/ClearScriptV8.linux-*.so; do
+          echo "$(basename "$f") requires $(readelf -V -W "$f" | grep -oE 'GLIBC_[0-9.]+' | sort -uV | tail -1)" | tee -a "$GITHUB_STEP_SUMMARY"
         done
     - name: Upload artifacts
       uses: actions/upload-artifact@v6
