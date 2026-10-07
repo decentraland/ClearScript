@@ -42,17 +42,20 @@ jobs:
   linux:
     name: Linux binaries
     runs-on: ubuntu-24.04
+    # V8 and ClearScriptV8 build against the host's glibc and libstdc++, so the container's Ubuntu version sets the
+    # minimum glibc the binaries require (2.35 for 22.04); keep it no newer than what consumers run, e.g. GameCI
+    container: ubuntu:22.04
     steps:
+    - name: Install build tools
+      run: |
+        apt-get update
+        DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl g++-10-aarch64-linux-gnu g++-12 git make pkg-config python3 xz-utils
     - name: Checkout
       uses: actions/checkout@v6
-    - name: Install ARM64 cross-build tools
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y g++-10-aarch64-linux-gnu
     - name: Build
       run: |
-        make -f Unix/Makefile
-        make -f Unix/Makefile CPU=arm64
+        make -f Unix/ClearScriptV8/Makefile
+        make -f Unix/ClearScriptV8/Makefile CPU=arm64
     - name: Dump Logs
       if: always()
       run: |
