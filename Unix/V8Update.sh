@@ -44,6 +44,30 @@ function continue {
     fi
 }
 
+# Chromium's sysroots omit static libraries, but ClearScriptV8 links libstdc++ and libgcc statically,
+# so extract them from the same Debian packages the sysroot was made from
+function install_sysroot_libs {
+    if [[ $1 == x86 ]]; then
+        local arch=i386 triple=i686-linux-gnu
+    elif [[ $1 == x64 ]]; then
+        local arch=amd64 triple=x86_64-linux-gnu
+    elif [[ $1 == arm ]]; then
+        local arch=armhf triple=arm-linux-gnueabihf
+    else
+        local arch=arm64 triple=aarch64-linux-gnu
+    fi
+    local libdir=build/linux/debian_bullseye_$arch-sysroot/usr/lib/gcc/$triple/10
+    if [[ -f $libdir/libstdc++.a && -f $libdir/libgcc_eh.a ]]; then return; fi
+    local tempdir=`mktemp -d` || fail
+    for package in libstdc++-10-dev libgcc-10-dev; do
+        local url=`grep -m 1 -F "/${package}_" build/linux/sysroot_scripts/generated_package_lists/bullseye.$arch` || fail
+        curl -sSfL "$url" -o $tempdir/$package.deb || fail
+        dpkg-deb -x $tempdir/$package.deb $tempdir/root || fail
+    done
+    cp $tempdir/root/usr/lib/gcc/$triple/10/libstdc++.a $tempdir/root/usr/lib/gcc/$triple/10/libgcc_eh.a $libdir || fail
+    rm -rf $tempdir
+}
+
 v8rev=$v8testedrev
 v8commit=$v8testedcommit
 download=true
@@ -215,6 +239,7 @@ if [[ $linux == true ]]; then
     build/linux/sysroot_scripts/install-sysroot.py --arch=x64 >install-x64-sysroot.log || fail
     build/linux/sysroot_scripts/install-sysroot.py --arch=i386 >install-i386-sysroot.log || fail
     build/linux/sysroot_scripts/install-sysroot.py --arch=$cpu >install-$cpu-sysroot.log || fail
+    install_sysroot_libs $cpu
 fi
 
 echo "Building V8 ..."
