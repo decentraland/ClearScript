@@ -62,13 +62,17 @@ endif
 
 ifeq ($(CPU), x86)
     TARGETARCH := $(TARGETARCH_X86)
+    SYSROOTARCH := i386
 else ifeq ($(CPU), x64)
     TARGETARCH := $(TARGETARCH_X64)
+    SYSROOTARCH := amd64
 else ifeq ($(CPU), arm)
     TARGETARCH := $(TARGETARCH_ARM)
     TARGETSUFFIX := eabihf
+    SYSROOTARCH := armhf
 else ifeq ($(CPU), arm64)
     TARGETARCH := $(TARGETARCH_ARM64)
+    SYSROOTARCH := arm64
 else
     $(error unsupported target CPU '$(CPU)')
 endif
@@ -102,9 +106,8 @@ ifeq ($(TARGETOS), linux)
         CXXLINKFLAGS := -s
     endif
     CXXLINKFLAGS := $(CXXLINKFLAGS) -static-libstdc++ -static-libgcc -ldl -lrt --no-undefined -fuse-ld=lld
-    ifneq ($(HOSTCPU), $(CPU))
-        CXXCROSSFLAGS := -I/usr/$(TARGET)/include
-    endif
+    # Build against the same Debian sysroot as V8 so the glibc requirement doesn't depend on the build machine
+    CXXSYSROOTFLAGS := --sysroot=$(V8DIR)/build/linux/debian_bullseye_$(SYSROOTARCH)-sysroot
 else ifeq ($(TARGETOS), darwin)
     TARGET := $(TARGETARCH)-$(TARGETOS)
     CXXLINKFLAGS := -framework CoreFoundation
@@ -122,7 +125,7 @@ else
 endif
 
 CXX := clang++
-CXXFLAGS := --target=$(TARGET) -std=c++20 -fvisibility=default -fPIC -fno-rtti -Wno-deprecated-declarations -Wno-ignored-attributes -Wno-vla-cxx-extension $(CXXCONFIGFLAGS) -I$(V8INCDIR) -I$(JSONINCDIR) $(CXXCROSSFLAGS)
+CXXFLAGS := --target=$(TARGET) -std=c++20 -fvisibility=default -fPIC -fno-rtti -Wno-deprecated-declarations -Wno-ignored-attributes -Wno-vla-cxx-extension $(CXXCONFIGFLAGS) -I$(V8INCDIR) -I$(JSONINCDIR) $(CXXSYSROOTFLAGS)
 ifeq ($(TARGETOS), linux)
     CXX := $(V8DIR)/third_party/llvm-build/Release+Asserts/bin/$(CXX)
 endif
